@@ -1,0 +1,84 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style type="text/css">
+
+.enter {
+  fill: #7986cb;
+}
+
+.exit {
+  fill: green;
+}
+
+  </style>
+  <script src="http://d3js.org/d3.v3.min.js"></script>
+  <script src="http://d3js.org/topojson.v0.min.js"></script>
+  <script src="scripts.js"></script>
+</head>
+<body>
+
+<script>
+
+  var n = 100,
+      duration = 1500;
+
+  var genX = d3.random.normal();
+  var genY = d3.random.normal();
+
+  function dot() {
+      var d = {
+          x: genX(),
+          y: genY()
+      };
+      return d;   
+  }
+          
+  var w = 600,
+      h = 400,
+      x = d3.scale.linear().range([0,w/8]),
+      y = d3.scale.linear().range([0,h/8]);
+
+  var svg = d3.select('body').append('svg')
+      .attr('width', w)
+      .attr('height', h * 2);
+
+  var g = svg.append('g').attr('transform', 'translate(' + (w/2) + ',' + (h/2)+ ')');
+  var styleCircle = g.selectAll('circle');
+  
+  //update(d3.range(n).map(dot));
+
+
+setInterval(function() {
+  console.log(g.selectAll('circle').data().length);
+  update(d3.range(1).map(dot));
+}, 200);
+
+var update = function(data) {
+  
+
+  styleCircle
+      .data(data)
+      .enter().append('circle')
+      .style('opacity', 0)
+      .attr("class", "enter")
+      .attr('cx', function(d) { return x(d.x); })
+      .attr('cy', function(d) { return y(d.y); })
+      .attr('r', 6)
+    .transition()
+      .delay(function(d,i) { return i * 100; })
+      .duration(duration)
+      .style('opacity', 1)
+    .transition()
+      .delay(function(d,i) { return i * 100 + duration + 100; })
+      .duration(duration)
+      .style('opacity', 0)
+      .attr("class", "exit")
+      .remove();
+}
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,29 @@
+{
+  "name": "ng-d3geo",
+  "version": "0.1.0",
+  "homepage": "https://github.com/komushi/ng-d3geo",
+  "authors": [
+    "Lei Xu <komushi@gmail.com>"
+  ],
+  "description": "angular directive for d3.js geo",
+  "main": "main/ng-d3geo.js",
+  "keywords": [
+    "angular",
+    "d3.js",
+    "geospacial",
+    "topojson",
+    "geojson"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "d3": "^3.5.17",
+    "topojson": "1.*.*"
+  }
+}
