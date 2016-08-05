@@ -1,6 +1,21 @@
 ( function () {
   'use strict';
 
+  function findprop(obj, path) {
+      // if(path == "id"){
+      //   console.log(obj);
+      // }
+
+      var args = path.split('.'), i, l;
+
+      for (i=0, l=args.length; i<l; i++) {
+          if (!obj.hasOwnProperty(args[i]))
+              return;
+          obj = obj[args[i]];
+      }
+
+      return obj;
+  }
 
   angular.module('ngD3geo',[])
   .directive('2layerMap', function($parse, $window){
@@ -8,12 +23,19 @@
         restrict:'EA',
         scope: {
           data: '=',
+          id: '@',
           topojsonPath: '@',
           width: '@',
           height: '@',
-          id: '@',
-          colorRange: '@',
-          center: '@'
+          layer1ColorRange: '@',
+          center: '@',
+          scale: '@',
+          layer1Objects: '@',
+          layer2Objects: '@',
+          layer1FeatureName: '@',
+          layer1FeatureCode: '@',
+          layer2FeatureName: '@',
+          layer2FeatureCode: '@'
         },
         template:"<svg></svg>",
         link: function(scope, elem, attrs){
@@ -23,9 +45,9 @@
           var d3 = $window.d3;
 
           /* Initialize tooltip */
-          var tip = d3.tip().attr('class', 'd3-tip').offset([-10, 0])
-            .html(function(d) { 
-              return "<strong>Count:</strong> <span style='color:red'>" + d.z + "</span>";
+          var tip = d3.tip().attr('class', 'd3-tip').offset([-30, 0])
+            .html(function(text) { 
+              return "<span style='color:red'><strong>" + text + "</strong></span>";
             });
 
           var rawSvg = elem.find('svg');
@@ -35,73 +57,92 @@
             .attr("height", height)
             .attr("style", "outline: thin solid gray;");
 
+          svg.append("rect")
+                        .attr("class", "background")
+                        .attr("width", width)
+                        .attr("height", height)
+                        .on("click", reset);
+
           var g = svg.append('g').call(tip);
-          var gBlocks = g.append("g").attr("id", "blocks");
-          var gDistricts = g.append("g").attr("id", "districts");
+          var gLayer2 = g.append("g").attr("id", scope.layer2Objects);
+          var gLayer1 = g.append("g").attr("id", scope.layer1Objects);
 
           var projection = d3.geo.mercator()
             .center(scope.center.split(","))
-            .scale(110000)
+            .scale(scope.scale)
             .translate([width / 2, height / 2]);
 
           var path = d3.geo.path().projection(projection);
 
-          var color = d3.scale.linear().domain([1,23])
-                        .interpolate(d3.interpolateHcl)
-                        .range(scope.colorRange.split(","));
-
           d3.json(scope.topojsonPath, function (error, json) {
 
-            var districts = topojson.feature(json, json.objects['districts']);
-            var blocks = topojson.feature(json, json.objects['blocks']);
-            var mesh_districts = topojson.mesh(json, json.objects['districts'], function(a, b) { return a !== b; });
+            var layer1Featues = topojson.feature(json, json.objects[scope.layer1Objects]).features;
+            var layer2Featues = topojson.feature(json, json.objects[scope.layer2Objects]).features;
+            var meshLayer1 = topojson.mesh(json, json.objects[scope.layer1Objects], function(a, b) { return a !== b; });
 
-            // block polygons and boundary
-            gBlocks.selectAll("path")
-              .data(blocks.features)
+            var color = d3.scale.linear().domain([1,layer1Featues.length])
+                          .interpolate(d3.interpolateHcl)
+                          .range(scope.layer1ColorRange.split(","));
+
+            // layer2 polygons and boundary
+            gLayer2.selectAll("path")
+              .data(layer2Featues)
               .enter().append("path")
               .attr("d", path)
-              .attr("district-id", function(d) { 
-                return d.properties.district_code; 
+              .attr("layer1-feature-code", function(d) {
+                return findprop(d, scope.layer1FeatureCode);
               })
-              .attr("block-id", function(d) { 
-                return d.properties.block_code; 
+              .attr("layer1-feature-name", function(d) {
+                return findprop(d, scope.layer1FeatureName);
               })
-              .attr("class", "block")
-              .on("click", blockClicked);
+              .attr("layer2-feature-code", function(d) { 
+                return findprop(d, scope.layer2FeatureCode);
+              })
+              .attr("layer2-feature-name", function(d) { 
+                return findprop(d, scope.layer2FeatureName);
+              })
+              .attr("class", "layer2")
+              .on("click", layer2Clicked)
+              .on("mouseover", mouseoverLayer2)
+              .on("mouseout", mouseoutLayer2);
 
-            // district polygons
-            gDistricts.selectAll("path")
-              .data(districts.features)
+            // Layer1 polygons
+            gLayer1.selectAll("path")
+              .data(layer1Featues)
               .enter().append("path")
-              .attr("class", "district")
+              .attr("class", "layer1")
               .attr("d", path)
               .attr("fill", function(d,i) { 
                 return color(i);
               })
-              .attr("district-id", function(d) { 
-                return d.properties.district_code; 
+              .attr("layer1-feature-code", function(d) {
+                return findprop(d, scope.layer1FeatureCode);
               })
-              .on("click", districtClicked);
+              .attr("layer1-feature-name", function(d) {
+                return findprop(d, scope.layer1FeatureName);
+              })
+              .on("click", layer1Clicked);
 
-            // district border
-            gDistricts.append("path")
-              .datum(mesh_districts)
+            // Layer1 border
+            gLayer1.append("path")
+              .datum(meshLayer1)
               .attr("d", path)
-              .attr("class", "district-boundary");
+              .attr("class", "layer1-boundary");
 
-            // district labels
-            gDistricts.selectAll("text")
-              .data(districts.features)
+            // Layer1 labels
+            gLayer1.selectAll("text")
+              .data(layer1Featues)
               .enter().append("text")
-              .attr("class", "district-label")
+              .attr("class", "layer1-label")
               .attr("transform", function(d) { 
                 return "translate(" + path.centroid(d) + ")"; 
               })
               .attr("dy", ".35em")
-              .text(function(d) { return d.properties.district; })
-              .attr("district-id", function(d) { 
-                return d.properties.district_code; 
+              .text(function(d) { 
+                return findprop(d, scope.layer1FeatureName); 
+              })
+              .attr("layer1-feature-code", function(d) { 
+                return findprop(d, scope.layer1FeatureCode);
               })
               .on("click", labelClicked);
 
@@ -110,10 +151,10 @@
           /***** click to zoom *****/
           var active = d3.select(null);
 
-          var blockClicked = function(d) {
+          var layer2Clicked = function(d) {
 
             if (active.node()) {
-              if (this.getAttribute("district-id") == active.node().getAttribute("district-id")) {
+              if (this.getAttribute("layer1-feature-code") == active.node().getAttribute("layer1-feature-code")) {
                 return reset();
               }
             }
@@ -127,23 +168,22 @@
 
             if (active.node()) {
               prevTagName = active.node().tagName;
-              if (this.getAttribute("district-id") == active.node().getAttribute("district-id")) {
+              if (this.getAttribute("layer1-feature-code") == active.node().getAttribute("layer1-feature-code")) {
                 return reset();
               }
             }
 
-            currentID = this.getAttribute("district-id");
+            currentID = this.getAttribute("layer1-feature-code");
 
             active.classed("active", false);
-            active = g.selectAll(".district").filter(function(d) { 
-              return d.properties.district_code == currentID;
+            active = g.selectAll(".layer1").filter(function(d) { 
+              return findprop(d, scope.layer1FeatureCode) == currentID;
             }).classed("active", true);
 
             zoom(d);
           }
 
-          var districtClicked = function(d) {
-
+          var layer1Clicked = function(d) {
             if (active.node() === this) {
               return reset();
             }
@@ -167,9 +207,15 @@
                 .duration(750)
                 .style("stroke-width", 1.5 / scale + "px")
                 .attr("transform", "translate(" + translate + ")scale(" + scale + ")");
+
+            var currentFeatureCode = findprop(d, scope.layer1FeatureCode);
+
+            // hide layer1 labels
+            gLayer1.selectAll('text')
+              .style("display", "none");
           }
 
-          var reset = function() {
+          function reset() {
             active.classed("active", false);
             active = d3.select(null);
 
@@ -177,8 +223,22 @@
                 .duration(750)
                 .style("stroke-width", "1.5px")
                 .attr("transform", "");
+
+            // show layer1 labels
+            gLayer1.selectAll('text')
+              .style("display", "block");
           };
           /***** click to zoom *****/
+
+          /***** d3-tip *****/
+          var mouseoverLayer2 = function(p) {
+            tip.show(findprop(p, scope.layer1FeatureName) + ' ' + findprop(p, scope.layer2FeatureName));
+          }
+          
+          var mouseoutLayer2 = function () {
+            tip.hide();
+          }
+          /***** d3-tip *****/
 
         }
      };
@@ -188,12 +248,17 @@
         restrict:'EA',
         scope: {
           data: '=',
+          id: '@',
           topojsonPath: '@',
           width: '@',
           height: '@',
-          id: '@',
           colorRange: '@',
-          center: '@'
+          center: '@',
+          scale: '@',
+          layerObjects: '@',
+          layerFeatureName: '@',
+          layerFeatureCode: '@',
+          featureNameStyle: '@'
         },
         template:"<svg></svg>",
         link: function(scope, elem, attrs){
@@ -202,12 +267,6 @@
 
           var d3 = $window.d3;
 
-          /* Initialize tooltip */
-          var tip = d3.tip().attr('class', 'd3-tip').offset([-10, 0])
-            .html(function(d) { 
-              return "<strong>Count:</strong> <span style='color:red'>" + d.z + "</span>";
-            });
-
           var rawSvg = elem.find('svg');
 
           var svg = d3.select(rawSvg[0])
@@ -215,63 +274,196 @@
             .attr("height", height)
             .attr("style", "outline: thin solid gray;");
 
-          var g = svg.append('g').call(tip);
+          var g = svg.append('g');
 
           var projection = d3.geo.mercator()
             .center(scope.center.split(","))
-            .scale(110000)
+            .scale(scope.scale)
             .translate([width / 2, height / 2]);
 
           var path = d3.geo.path().projection(projection);
 
-          var color = d3.scale.linear().domain([1,23])
-                        .interpolate(d3.interpolateHcl)
-                        .range(scope.colorRange.split(","));
-
           d3.json(scope.topojsonPath, function (error, json) {
 
-            var districts = topojson.feature(json, json.objects['districts']);
-            var mesh_districts = topojson.mesh(json, json.objects['districts'], function(a, b) { return a !== b; });
+            var layerFeatues = topojson.feature(json, json.objects[scope.layerObjects]).features;
+            var mesh = topojson.mesh(json, json.objects[scope.layerObjects], function(a, b) { return a !== b; });
 
+            var color = d3.scale.linear().domain([1,layerFeatues.length])
+                          .interpolate(d3.interpolateHcl)
+                          .range(scope.colorRange.split(","));
 
-            // district polygons
-            g.selectAll(".district")
-              .data(districts.features)
-              .enter().append("path")
-              .attr("class", "district")
-              .attr("d", path)
-              .attr("fill", function(d,i) { 
-                return color(i);
-              })
-              .attr("district-id", function(d) { 
-                return d.properties.district_code; 
-              });
+            if (scope.featureNameStyle == 'tip') {
+              /***** d3-tip *****/
+              // Initialize tooltip 
+              var tip = d3.tip().attr('class', 'd3-tip').offset([0, 0])
+                .html(function(text) { 
+                  return "<span style='color:red'><strong>" + text + "</strong></span>";
+                });          
 
-            // district border
-            g.append("path")
-              .datum(mesh_districts)
-              .attr("d", path)
-              .attr("class", "district-boundary");
+              if (scope.featureNameStyle == 'tip') {
+                g.call(tip); 
+              }
 
-            // district labels
-            g.selectAll(".district-label")
-              .data(districts.features)
-              .enter().append("text")
-              .attr("class", "district-label")
-              .attr("transform", function(d) { 
-                return "translate(" + path.centroid(d) + ")"; 
-              })
-              .attr("dy", ".35em")
-              .text(function(d) { return d.properties.district; })
-              .attr("district-id", function(d) { 
-                return d.properties.district_code; 
-              });
+              var mouseover = function(p) {
+                tip.show(findprop(p, scope.layerFeatureName));
+              }
+              
+              var mouseout = function (p) {
+                tip.hide();
+              }
+              /***** d3-tip *****/
 
+              // polygons
+              g.selectAll("path")
+                .data(layerFeatues)
+                .enter().append("path")
+                .attr("class", "layer1")
+                .attr("d", path)
+                .attr("fill", function(d,i) { 
+                  return color(i);
+                })
+                .attr("layer-feature-code", function(d) {
+                  return findprop(d, scope.layerFeatureCode);
+                })
+                .attr("layer-feature-name", function(d) {
+                  return findprop(d, scope.layerFeatureName);
+                })
+              .on("mouseover", mouseover)
+              .on("mouseout", mouseout);
+
+              // border
+              g.append("path")
+                .datum(mesh)
+                .attr("d", path)
+                .attr("class", "layer1-boundary");
+
+            } else if (scope.featureNameStyle == 'fading') {
+
+              var mouseover = function(p) {
+                g.selectAll("text")
+                  .filter(function(d){
+                    return findprop(p, scope.layerFeatureCode) == findprop(d, scope.layerFeatureCode);
+                  })
+                  .transition()
+                  .duration(200)
+                  .style("fill-opacity", 1)
+                  .style("display", "block");
+              }
+              
+              var mouseout = function (p) {
+                g.selectAll("text")
+                  .filter(function(d){
+                    return findprop(p, scope.layerFeatureCode) == findprop(d, scope.layerFeatureCode);
+                  })
+                  .transition()
+                  .duration(200)
+                  .style("fill-opacity", 0)
+                  .transition()
+                  .style("display", "none");
+              }
+
+              // polygons
+              g.selectAll("path")
+                .data(layerFeatues)
+                .enter().append("path")
+                .attr("class", "layer1")
+                .attr("d", path)
+                .attr("fill", function(d,i) { 
+                  return color(i);
+                })
+                .attr("layer-feature-code", function(d) {
+                  return findprop(d, scope.layerFeatureCode);
+                })
+                .attr("layer-feature-name", function(d) {
+                  return findprop(d, scope.layerFeatureName);
+                })
+                .on("mouseover", mouseover)
+                .on("mouseout", mouseout);
+
+              // border
+              g.append("path")
+                .datum(mesh)
+                .attr("d", path)
+                .attr("class", "layer1-boundary");
+
+              // Layer1 labels
+              g.selectAll("text")
+                .data(layerFeatues)
+                .enter().append("text")
+                .attr("class", "layer1-label")
+                .style("fill-opacity", 0)
+                .style("display", "none")
+                .attr("transform", function(d) { 
+                  return "translate(" + path.centroid(d) + ")"; 
+                })
+                .attr("dy", ".35em")
+                .text(function(d) { 
+                  return findprop(d, scope.layerFeatureName); 
+                })
+                .attr("layer-feature-code", function(d) { 
+                  return findprop(d, scope.layerFeatureCode);
+                });
+            } else if (scope.featureNameStyle == 'static') {
+              // polygons
+              g.selectAll("path")
+                .data(layerFeatues)
+                .enter().append("path")
+                .attr("class", "layer1")
+                .attr("d", path)
+                .attr("fill", function(d,i) { 
+                  return color(i);
+                })
+                .attr("layer-feature-code", function(d) {
+                  return findprop(d, scope.layerFeatureCode);
+                })
+                .attr("layer-feature-name", function(d) {
+                  return findprop(d, scope.layerFeatureName);
+                });
+
+              // border
+              g.append("path")
+                .datum(mesh)
+                .attr("d", path)
+                .attr("class", "layer1-boundary");
+
+              // Layer1 labels
+              g.selectAll("text")
+                .data(layerFeatues)
+                .enter().append("text")
+                .attr("class", "layer1-label")
+                .attr("transform", function(d) { 
+                  return "translate(" + path.centroid(d) + ")"; 
+                })
+                .attr("dy", ".35em")
+                .text(function(d) { 
+                  return findprop(d, scope.layerFeatureName); 
+                })
+                .attr("layer-feature-code", function(d) { 
+                  return findprop(d, scope.layerFeatureCode);
+                });
+            } else {
+              // polygons
+              g.selectAll("path")
+                .data(layerFeatues)
+                .enter().append("path")
+                .attr("class", "layer1")
+                .attr("d", path)
+                .attr("fill", function(d,i) { 
+                  return color(i);
+                });
+
+              // border
+              g.append("path")
+                .datum(mesh)
+                .attr("d", path)
+                .attr("class", "layer1-boundary");
+            }
           });
 
           /***** mouse zoom & pan *****/
           var t = projection.translate(); // the projection's default translation
           var s = projection.scale() // the projection's default scale
+
           var redraw = function () {
             // d3.event.translate (an array) stores the current translation from the parent SVG element
             // t (an array) stores the projection's default translation
@@ -286,9 +478,9 @@
             g.selectAll("path").attr("d", path);
             g.selectAll("text").attr("transform", function(d) { return "translate(" + path.centroid(d) + ")"; });
           }
+
           svg.call(d3.behavior.zoom().on("zoom", redraw));
           /***** mouse zoom & pan *****/
-
         }
      };
   });

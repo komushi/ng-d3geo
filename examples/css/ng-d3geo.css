@@ -6,12 +6,17 @@ svg {
   font-weight: 300;
 }
 
+.background {
+  fill: none;
+  pointer-events: all;
+}
+
 .d3-tip {
 	line-height: 1;
 	font-family: 'Noto Sans Japanese', 'Klee', 'Meiryo';
-	font-weight: 700;
+	font-weight: 200;
 	padding: 12px;
-	background: rgba(0, 0, 0, 0.3);
+	background: rgba(0, 0, 0, 0.2);
 	color: #fff;
 	border-radius: 2px;
 }
@@ -24,7 +29,7 @@ svg {
 	width: 100%;
 	line-height: 1;
 	color: rgba(0, 0, 0, 0.3);
-	content: "\25BC";
+	/*content: "\25BC";*/
 	position: absolute;
 	text-align: center;
 }
@@ -34,38 +39,6 @@ svg {
   margin: -1px 0 0 0;
   top: 100%;
   left: 0;
-}
-
-.district {
-  cursor: pointer;
-}
-
-.district.active {
-  display:none;
-}
-
-.district-boundary {
-  fill: none;
-  stroke: white;
-  stroke-dasharray: 2,2;
-  stroke-linejoin: round;
-  stroke-width: 1;
-}
-
-.district-label {
-  fill: white;
-  fill-opacity: .9;
-  font-size: 14px;
-  font-weight: bold;
-  text-anchor: middle;
-  cursor: pointer;
-}
-
-.block {
-  cursor: pointer;
-  fill: orange;
-  stroke: white;
-  stroke-width: 0.2;
 }
 
 .circle {
@@ -90,9 +63,10 @@ svg {
 
 .layer1-label {
   fill: white;
-  fill-opacity: .9;
+  fill-opacity: 1;
   font-size: 14px;
-  font-weight: bold;
+  font-family: 'Noto Sans Japanese', 'Klee', 'Meiryo';
+  font-weight: 700;
   text-anchor: middle;
   cursor: pointer;
 }
@@ -102,4 +76,8 @@ svg {
   fill: orange;
   stroke: white;
   stroke-width: 0.2;
+}
+
+.layer1:hover, .layer2:hover {
+  fill: red;
 }

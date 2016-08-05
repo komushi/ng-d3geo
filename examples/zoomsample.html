@@ -71,13 +71,13 @@ svg.append("rect")
 
 var g = svg.append("g");
 
-d3.json("data/us.json", function(error, us) {
+d3.json("data/us_counties_states_final.json", function(error, us) {
 
 
  g.append("g")
       .attr("id", "counties")
     .selectAll("path")
-      .data(topojson.feature(us, us.objects.counties).features)
+      .data(topojson.feature(us, us.objects.us_counties).features)
     .enter().append("path")
   .attr("d", path)
   .attr("class", "county-boundary")
@@ -86,7 +86,7 @@ d3.json("data/us.json", function(error, us) {
   g.append("g")
       .attr("id", "states")
     .selectAll("path")
-      .data(topojson.feature(us, us.objects.states).features)
+      .data(topojson.feature(us, us.objects.us_states).features)
     .enter().append("path")
   .attr("d", path)
   .attr("class", "state")
@@ -94,7 +94,7 @@ d3.json("data/us.json", function(error, us) {
 
 
   g.append("path")
-      .datum(topojson.mesh(us, us.objects.states, function(a, b) { return a !== b; }))
+      .datum(topojson.mesh(us, us.objects.us_states, function(a, b) { return a !== b; }))
       .attr("id", "state-borders")
       .attr("d", path);
 });

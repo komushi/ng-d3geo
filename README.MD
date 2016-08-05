@@ -15,13 +15,6 @@ live-server
 http://localhost:8080
 
 ----------
-Online Demo
--------------
-
-###Access plunker
-
-
-----------
 Quick Start
 -------------
 ### Install via Bower
@@ -31,4 +24,5 @@ bower install --save ng-d3geo
 
 ### Usage
 ```
+
 ```

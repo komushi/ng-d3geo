@@ -76,7 +76,7 @@ var color = d3.scale.linear().domain([1,23])
 
 
 
-d3.json("data/tokyo_23_blocks_districts.json", function (error, json) {
+d3.json("data/tokyo_23_blocks_districts_final.json", function (error, json) {
 
   var districts = topojson.feature(json, json.objects['districts']);
   var blocks = topojson.feature(json, json.objects['blocks']);
