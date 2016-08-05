@@ -335,7 +335,7 @@ var coordinates =
 [139.75124,35.675626],
 [139.758656,35.685403]];
 
-var update = function(data) {
+var updateCircle = function(data) {
   styleCircle
       .data(data)
       .enter().append('circle')
@@ -372,7 +372,7 @@ setInterval(function() {
   else {
     dot = coordinates.slice(to, from);
   }
-  update(dot);
+  updateCircle(dot);
 }, 2000);
 */
 </script>

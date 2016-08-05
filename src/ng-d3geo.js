@@ -17,8 +17,8 @@
       return obj;
   }
 
-  angular.module('ngD3geo',[])
-  .directive('2layerMap', function($parse, $window){
+  angular.module('ngD3geo',['rx'])
+  .directive('2layerMap', function($parse, $window, observeOnScope){
      return{
         restrict:'EA',
         scope: {
@@ -239,6 +239,43 @@
             tip.hide();
           }
           /***** d3-tip *****/
+
+          /***** event data *****/
+          var duration = 1500;
+
+          var styleCircle = g.selectAll('circle');
+
+          var updateCircle = function(data) {
+            styleCircle
+                .data(data)
+                .enter().append('circle')
+                .style('opacity', 0)
+                .attr("class", "circle")
+                .attr('cx', function(d) { 
+                  return projection(d)[0];
+                })
+                .attr('cy', function(d) { 
+                  return projection(d)[1];
+                })
+                .attr('r', 1)
+              .transition()
+                .delay(function(d,i) { return i * 100; })
+                .duration(duration)
+                .style('opacity', 1)
+              .transition()
+                .delay(function(d,i) { return i * 100 + duration + 100; })
+                .duration(duration)
+                .style('opacity', 0)
+                .remove();
+          }
+
+          // rx observeOnScope for data changes and re-render
+          observeOnScope(scope, 'data').subscribe(function(change) {
+            if (change.newValue && change.oldValue) {
+              return updateCircle(change.newValue);
+            }
+          }); 
+          /***** event data *****/
 
         }
      };

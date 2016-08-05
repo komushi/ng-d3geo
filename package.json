@@ -7,7 +7,9 @@
     "angular": "~1.5",
     "d3": "3.5.*",
     "topojson": "1.*",
-    "d3-tip": "^0.6.7"
+    "d3-tip": "^0.6.7",
+    "rxjs": "*",
+    "angular-rx": "~1.1"
   },
   "devDependencies": {
     "grunt": "^1.0.1",
