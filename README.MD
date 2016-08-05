@@ -1,6 +1,8 @@
 # Angular Directives for d3 geo
 
-![Geo](https://raw.githubusercontent.com/komushi/ng-d3geo/master/image/geo.png)
+![Geo](https://raw.githubusercontent.com/komushi/ng-d3geo/master/image/image1.png)
+
+![Geo](https://raw.githubusercontent.com/komushi/ng-d3geo/master/image/image2.png)
 
 ----------
 Local Demo
