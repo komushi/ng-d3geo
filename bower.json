@@ -24,6 +24,7 @@
   ],
   "dependencies": {
     "d3": "^3.5.17",
-    "topojson": "1.*.*"
+    "topojson": "1.*",
+    "d3-tip": "^0.6.7"
   }
 }

@@ -4,7 +4,9 @@
   "description": "angular directive for d3.js geo",
   "main": "main/ng-d3geo.js",
   "dependencies": {
-    "d3": "^3.5.17"
+    "d3": "^3.5.17",
+    "topojson": "1.*",
+    "d3-tip": "^0.6.7"
   },
   "devDependencies": {
     "grunt": "^1.0.1",
