@@ -21,7 +21,9 @@
 <script>
 var app = angular.module("d3geoApp", ['ngD3geo']); 
 app.controller("2layerMapCtrl", ['$scope', '$http', '$interval', function($scope, $http, $interval) {
+  
 
+/*
   var coordinates =
   [[139.734291,35.688634],
   [139.760496,35.690335],
@@ -124,26 +126,63 @@ app.controller("2layerMapCtrl", ['$scope', '$http', '$interval', function($scope
   [139.75124,35.675626],
   [139.758656,35.685403]];
 
-  $interval(function(){
-    var min = 0;
-    var max = coordinates.length - 1;
-    var from = Math.floor(Math.random() * (max - min + 1)) + min;
-    var to = Math.floor(Math.random() * (max - min + 1)) + min;
-    var dot;
-    if (from <= to) {
-      dot = coordinates.slice(from, to);
-    }
-    else {
-      dot = coordinates.slice(to, from);
-    }
+  var timer;
 
-    $scope.circleData = dot;
-  }, 10000, 10000);
+  $scope.subEventsFrom = function (feature) {
+    console.log("subEventsFrom" + feature);
+
+    if (feature == '101') {
+      timer = 
+        $interval(function(){
+          var min = 0;
+          var max = coordinates.length - 1;
+          var from = Math.floor(Math.random() * (max - min + 1)) + min;
+          var to = Math.floor(Math.random() * (max - min + 1)) + min;
+          var dot;
+          if (from <= to) {
+            dot = coordinates.slice(from, to);
+          }
+          else {
+            dot = coordinates.slice(to, from);
+          }
+          $scope.circleData = dot;
+        }, 5000);  
+    }
+  };
+
+  $scope.unsubEvents = function () {
+    console.log("unsubEvents called");
+    $interval.cancel(timer);
+    timer = null;
+  };
+*/
+
+
+  // var featureCodes =
+  // ['1010360', '1010110', '1020070', '1020090', '1190350', '1190210', '1190100', '1190130', '1190050', '1170160', '1030120', '1110250', '1110210', '1130180', '1130150', '1040850', '1040640', '1040630', '1040540', '1040380', '1040430', '1040290', '1040040', '1120050', '1010080', '1010180'];
+
+  // $interval(function(){
+  //   var min = 0;
+  //   var max = featureCodes.length - 1;
+
+  //   var codes = [];
+
+  //   for (i = 0; i < 10; i++) {
+  //     var from = Math.floor(Math.random() * (max - min + 1)) + min;
+  //     codes.push(featureCodes.slice(from, from + 1)[0]);      
+  //   }
+
+  //   $scope.featureCodes = codes;
+
+  // }, 2000);
+
+
 }]);
 </script>
 
 <div ng-controller="2layerMapCtrl">
-  <div style="width:1500px; height:800px;">
+
+<!--   <div>
     <h2>2-Layer Map Tokyo</h2>
     <div 2layer-map
       id="01"
@@ -160,29 +199,34 @@ app.controller("2layerMapCtrl", ['$scope', '$http', '$interval', function($scope
       layer1-feature-code="properties.district_code"
       layer2-feature-name="properties.block"
       layer2-feature-code="properties.block_code"
-      >
-    </div>
-  </div>
-
-<!--   <br/>
-  <br/>
-  <div style="width:1500px; height:800px;">
-    <h2>Zoom & Pan Map Tokyo</h2>
-    <div zoom-pan-map
-      id="02"
-      topojson-path="data/tokyo_23_blocks_districts_final.json"
-      width="1000"
-      height="1000"
-      color-range="#0d47a1,#e3f2fd"
-      center="139.752268, 35.677043"
-      scale="150000"
-      layer-objects="districts"
-      layer-feature-name="properties.district"
-      layer-feature-code="properties.district_code"
-      feature-name-style="fading"
+      on-receive-events="subEventsFrom(feature)"
+      on-stop-events="unsubEvents()"
       >
     </div>
   </div> -->
+
+
+  <br/>
+  <br/>
+  <div>
+    <h2>Fixed Scale Tokyo</h2>
+    <div fixed-scale-map
+      id="02"
+      data="featureCodes"
+      topojson-path="data/tokyo_23_blocks_districts_final.json"
+      width="1000"
+      height="1000"
+      bg-color="#bbdefb"
+      color-range="#227AFF,#FFF500"
+      center="139.752268, 35.677043"
+      scale="150000"
+      layer-objects="blocks"
+      layer-feature-name="properties.block"
+      layer-feature-code="properties.block_code"
+      feature-name-style="events"
+      >
+    </div>
+  </div>
 
 <!--   <br/>
   <br/>
@@ -225,6 +269,24 @@ app.controller("2layerMapCtrl", ['$scope', '$http', '$interval', function($scope
       >
     </div>
   </div> -->
+
+<!--   <br/>
+  <br/>
+  <div style="width:1500px; height:800px;">
+    <h2>Zoom & Map US</h2>
+    <div zoom-pan-map
+      id="04"
+      topojson-path="data/us_counties_states_final.json"
+      width="1200"
+      height="600"
+      color-range="#0d47a1,#e3f2fd"
+      center="-99.736816, 38.818207"
+      scale="1000"
+      layer-objects="us_states"
+      >
+    </div>
+  </div> -->
+
 </div>
 
 

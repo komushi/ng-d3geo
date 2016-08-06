@@ -42,7 +42,8 @@ svg {
 }
 
 .circle {
-  fill: red;
+  fill: silver;
+  r: 2;
 }
 
 .layer1 {
@@ -64,10 +65,16 @@ svg {
 .layer1-label {
   fill: white;
   fill-opacity: 1;
-  font-size: 14px;
+  font-size: 16px;
   font-family: 'Noto Sans Japanese', 'Klee', 'Meiryo';
   font-weight: 700;
   text-anchor: middle;
+  text-shadow:
+    2px 2px 0 #000,
+    -1px -1px 0 #000,  
+    1px -1px 0 #000,
+    -1px 1px 0 #000,
+     1px 1px 0 #000;
   cursor: pointer;
 }
 
