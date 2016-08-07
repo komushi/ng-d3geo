@@ -511,7 +511,7 @@
         }
      };
   })
-  .directive('receiveEventsMap', function($parse, $window, observeOnScope){
+  .directive('eventsMap', function($parse, $window, observeOnScope){
      return{
         restrict:'EA',
         scope: {
@@ -555,10 +555,6 @@
 
             var layerFeatues = topojson.feature(json, json.objects[scope.layerObjects]).features;
             var mesh = topojson.mesh(json, json.objects[scope.layerObjects], function(a, b) { return a !== b; });
-
-            var color = d3.scale.linear().domain([1,layerFeatues.length])
-                          .interpolate(d3.interpolateHcl)
-                          .range(scope.colorRange.split(","));
 
             // polygons
             g.selectAll("path")
@@ -608,6 +604,10 @@
             var duration = 50;
 
             var showFeatureNames = function(newFeatureCodes) {
+              var color = d3.scale.linear().domain([1, newFeatureCodes.length])
+                            .interpolate(d3.interpolateHcl)
+                            .range(scope.colorRange.split(","));
+
               g.selectAll("text")
                 .filter(function(d){
                   return newFeatureCodes.indexOf(findprop(d, scope.layerFeatureCode)) > -1;
@@ -615,7 +615,11 @@
                 .transition()
                 .duration(duration)
                 .style("fill-opacity", 1)
-                .style("display", "block");
+                .style("display", "block")
+                .style("fill", function(d,i) {
+                  var index = newFeatureCodes.indexOf(findprop(d, scope.layerFeatureCode));
+                  return color(index);
+                });
             }
 
             var hideFeatureNames = function(oldFeatureCodes, newFeatureCodes) {
@@ -635,7 +639,7 @@
                 });
             }
 
-            var restoreFeatures = function(oldFeatureCodes, newFeatureCodes) {
+            var dehighlightFeatures = function(oldFeatureCodes, newFeatureCodes) {
               g.selectAll("path")
                 .filter(function(d){
                   return oldFeatureCodes.indexOf(findprop(d, scope.layerFeatureCode)) > -1;
@@ -651,9 +655,11 @@
             }
 
             var highlightFeatures = function(newFeatureCodes) {
+
               var color = d3.scale.linear().domain([1, newFeatureCodes.length])
                             .interpolate(d3.interpolateHcl)
                             .range(scope.colorRange.split(","));
+
 
               g.selectAll("path")
                 .filter(function(d){
@@ -661,9 +667,9 @@
                 })
                 .transition()
                 .duration(duration)
-                // .attr("fill", "red");
-                .attr("fill", function(d,i) { 
-                  return color(i);
+                .attr("fill", function(d,i) {
+                  var index = newFeatureCodes.indexOf(findprop(d, scope.layerFeatureCode));
+                  return color(index);
                 });
             }
 
@@ -677,7 +683,7 @@
               } else {
                 if (change.newValue) {
                   hideFeatureNames(change.oldValue, change.newValue);
-                  restoreFeatures(change.oldValue, change.newValue);
+                  dehighlightFeatures(change.oldValue, change.newValue);
                 }
               }
             }); 

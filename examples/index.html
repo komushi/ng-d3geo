@@ -158,7 +158,23 @@ app.controller("2layerMapCtrl", ['$scope', '$http', '$interval', function($scope
 
 
   var featureCodes =
-  ['1010360', '1010110', '1020070', '1020090', '1190350', '1190210', '1190100', '1190130', '1190050', '1170160', '1030120', '1110250', '1110210', '1130180', '1130150', '1040850', '1040640', '1040630', '1040540', '1040380', '1040430', '1040290', '1040040', '1120050', '1010080', '1010180'];
+  ['1010360', '1010110', '1020070', '1020090', '1190350', '1150210', '1190100', '1190130', '1190050', '1170160', '1030120', '1110250', '1110210', '1130180', '1130150', '1040850', '1040640', '1040630', '1040540', '1040380', '1040430', '1040290', '1040040', '1120050', '1010080', '1010180', '1010410', '1060030', '1060090', '1060320', '1090010', '1090090', '1090130', '1090210', '1070020', '1070080', '1070190', '1110010', '1110150', '1050180'];
+
+  // $interval(function(){
+  //   var min = 0;
+  //   var max = featureCodes.length - 1;
+
+  //   var routes = [];
+
+  //   for (i = 0; i < 10; i++) {
+  //     var from = Math.floor(Math.random() * (max - min + 1)) + min;
+  //     var to = Math.floor(Math.random() * (max - min + 1)) + min;
+  //     routes.push({from: featureCodes.slice(from, from + 1)[0], to: featureCodes.slice(to, to + 1)[0]});
+  //   }
+
+  //   $scope.routes = routes;
+
+  // }, 2000);
 
   $interval(function(){
     var min = 0;
@@ -166,14 +182,17 @@ app.controller("2layerMapCtrl", ['$scope', '$http', '$interval', function($scope
 
     var codes = [];
 
-    for (i = 0; i < 10; i++) {
+    while(codes.length < 10) {
       var from = Math.floor(Math.random() * (max - min + 1)) + min;
-      codes.push(featureCodes.slice(from, from + 1)[0]);      
+      var code = featureCodes.slice(from, from + 1)[0];
+      if (codes.indexOf(code) == -1) {
+        codes.push(code);        
+      }
     }
 
     $scope.featureCodes = codes;
 
-  }, 2000);
+  }, 3000);
 
 
 }]);
@@ -181,7 +200,7 @@ app.controller("2layerMapCtrl", ['$scope', '$http', '$interval', function($scope
 
 <div ng-controller="2layerMapCtrl">
 
-  <div>
+<!--   <div>
     <h2>2-Layer Map Tokyo</h2>
     <div 2layer-map
       id="01"
@@ -202,14 +221,14 @@ app.controller("2layerMapCtrl", ['$scope', '$http', '$interval', function($scope
       on-stop-events="unsubEvents()"
       >
     </div>
-  </div>
+  </div> -->
 
 
   <br/>
   <br/>
   <div>
     <h2>Receiving Events Tokyo</h2>
-    <div receive-events-map
+    <div events-map
       id="02"
       data="featureCodes"
       topojson-path="data/tokyo_23_blocks_districts_final.json"
@@ -226,7 +245,7 @@ app.controller("2layerMapCtrl", ['$scope', '$http', '$interval', function($scope
     </div>
   </div>
 
-  <br/>
+<!--   <br/>
   <br/>
   <div style="width:1500px; height:800px;">
     <h2>Static Map Tokyo</h2>
@@ -244,7 +263,7 @@ app.controller("2layerMapCtrl", ['$scope', '$http', '$interval', function($scope
       feature-name-style="hover"
       >
     </div>
-  </div>
+  </div> -->
 
 <!--   <br/>
   <br/>
