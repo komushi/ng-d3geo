@@ -35,7 +35,9 @@
           layer1FeatureName: '@',
           layer1FeatureCode: '@',
           layer2FeatureName: '@',
-          layer2FeatureCode: '@'
+          layer2FeatureCode: '@',
+          onReceiveEvents: '&',
+          onStopEvents: '&'
         },
         template:"<svg></svg>",
         link: function(scope, elem, attrs){
@@ -43,12 +45,6 @@
               height = scope.height;
 
           var d3 = $window.d3;
-
-          /* Initialize tooltip */
-          var tip = d3.tip().attr('class', 'd3-tip').offset([-30, 0])
-            .html(function(text) { 
-              return "<span style='color:red'><strong>" + text + "</strong></span>";
-            });
 
           var rawSvg = elem.find('svg');
 
@@ -63,9 +59,11 @@
                         .attr("height", height)
                         .on("click", reset);
 
-          var g = svg.append('g').call(tip);
+          var g = svg.append('g');
           var gLayer2 = g.append("g").attr("id", scope.layer2Objects);
           var gLayer1 = g.append("g").attr("id", scope.layer1Objects);
+          var gLabelLayer2 = g.append("g").attr("id", scope.layer2Objects + "_label");
+          var gLabelLayer1 = g.append("g").attr("id", scope.layer1Objects + "_label");
 
           var projection = d3.geo.mercator()
             .center(scope.center.split(","))
@@ -106,6 +104,25 @@
               .on("mouseover", mouseoverLayer2)
               .on("mouseout", mouseoutLayer2);
 
+            // Layer2 labels
+            gLabelLayer2.selectAll("text")
+              .data(layer2Featues)
+              .enter().append("text")
+              .attr("class", "label")
+              .style("fill-opacity", 0)
+              .style("display", "none")
+              .attr("transform", function(d) { 
+                return "translate(" + path.centroid(d) + ")"; 
+              })
+              .attr("dy", "-1em")
+              .attr("pointer-events", "none")
+              .text(function(d) { 
+                return findprop(d, scope.layer2FeatureName); 
+              })
+              .attr("layer2-feature-code", function(d) { 
+                return findprop(d, scope.layer2FeatureCode);
+              });
+
             // Layer1 polygons
             gLayer1.selectAll("path")
               .data(layer1Featues)
@@ -130,10 +147,10 @@
               .attr("class", "layer1-boundary");
 
             // Layer1 labels
-            gLayer1.selectAll("text")
+            gLabelLayer1.selectAll("text")
               .data(layer1Featues)
               .enter().append("text")
-              .attr("class", "layer1-label")
+              .attr("class", "label")
               .attr("transform", function(d) { 
                 return "translate(" + path.centroid(d) + ")"; 
               })
@@ -152,7 +169,6 @@
           var active = d3.select(null);
 
           var layer2Clicked = function(d) {
-
             if (active.node()) {
               if (this.getAttribute("layer1-feature-code") == active.node().getAttribute("layer1-feature-code")) {
                 return reset();
@@ -194,6 +210,7 @@
             zoom(d);
           };
 
+
           var zoom = function(d) {
             var bounds = path.bounds(d),
                 dx = bounds[1][0] - bounds[0][0],
@@ -204,15 +221,22 @@
                 translate = [width / 2 - scale * x, height / 2 - scale * y];
 
             g.transition()
-                .duration(750)
-                .style("stroke-width", 1.5 / scale + "px")
-                .attr("transform", "translate(" + translate + ")scale(" + scale + ")");
-
-            var currentFeatureCode = findprop(d, scope.layer1FeatureCode);
+              .duration(750)
+              .style("stroke-width", 1.5 / scale + "px")
+              .attr("transform", "translate(" + translate + ")scale(" + scale + ")");
 
             // hide layer1 labels
-            gLayer1.selectAll('text')
+            gLabelLayer1.selectAll('text')
+              .transition()
+              .duration(250)
+              .style("fill-opacity", 0)
+              .transition()
               .style("display", "none");
+
+            // callback to notify the specified feature is ready to receive location events
+            var featureCode = findprop(d, scope.layer1FeatureCode);
+            scope.onStopEvents();
+            scope.onReceiveEvents({feature: featureCode});
           }
 
           function reset() {
@@ -220,32 +244,53 @@
             active = d3.select(null);
 
             g.transition()
-                .duration(750)
-                .style("stroke-width", "1.5px")
-                .attr("transform", "");
+              .duration(750)
+              .style("stroke-width", "1.5px")
+              .attr("transform", "");
 
             // show layer1 labels
-            gLayer1.selectAll('text')
-              .style("display", "block");
+            gLabelLayer1.selectAll('text')
+              .transition()
+              .style("display", "block")
+              .transition()
+              .duration(250)
+              .style("fill-opacity", 1);
+
+            scope.onStopEvents();
           };
           /***** click to zoom *****/
 
-          /***** d3-tip *****/
+          /***** hover *****/
           var mouseoverLayer2 = function(p) {
-            tip.show(findprop(p, scope.layer1FeatureName) + ' ' + findprop(p, scope.layer2FeatureName));
+            gLabelLayer2.selectAll("text")
+              .filter(function(d){
+                return findprop(p, scope.layer2FeatureCode) == findprop(d, scope.layer2FeatureCode);
+              })
+              .transition()
+              .duration(200)
+              .style("fill-opacity", 1)
+              .style("display", "block");
           }
           
-          var mouseoutLayer2 = function () {
-            tip.hide();
+          var mouseoutLayer2 = function (p) {
+            gLabelLayer2.selectAll("text")
+              .filter(function(d){
+                return findprop(p, scope.layer2FeatureCode) == findprop(d, scope.layer2FeatureCode);
+              })
+              .transition()
+              .duration(200)
+              .style("fill-opacity", 0)
+              .transition()
+              .style("display", "none");
           }
-          /***** d3-tip *****/
+          /***** hover *****/
 
           /***** event data *****/
           var duration = 1500;
 
           var styleCircle = g.selectAll('circle');
 
-          var updateCircle = function(data) {
+          var visualizeEvents = function(data) {
             styleCircle
                 .data(data)
                 .enter().append('circle')
@@ -272,11 +317,255 @@
           // rx observeOnScope for data changes and re-render
           observeOnScope(scope, 'data').subscribe(function(change) {
             if (change.newValue && change.oldValue) {
-              return updateCircle(change.newValue);
+              return visualizeEvents(change.newValue);
             }
           }); 
           /***** event data *****/
 
+        }
+     };
+  })
+  .directive('fixedScaleMap', function($parse, $window, observeOnScope){
+     return{
+        restrict:'EA',
+        scope: {
+          data: '=',
+          id: '@',
+          topojsonPath: '@',
+          width: '@',
+          height: '@',
+          bgColor: '@',
+          colorRange: '@',
+          center: '@',
+          scale: '@',
+          layerObjects: '@',
+          layerFeatureName: '@',
+          layerFeatureCode: '@',
+          featureNameStyle: '@'
+        },
+        template:"<svg></svg>",
+        link: function(scope, elem, attrs){
+          var width = scope.width,
+              height = scope.height;
+
+          var d3 = $window.d3;
+
+          var rawSvg = elem.find('svg');
+
+          var svg = d3.select(rawSvg[0])
+            .attr("width", width)
+            .attr("height", height)
+            .attr("style", "outline: thin solid gray;");
+
+          var g = svg.append('g');
+
+          var projection = d3.geo.mercator()
+            .center(scope.center.split(","))
+            .scale(scope.scale)
+            .translate([width / 2, height / 2]);
+
+          var path = d3.geo.path().projection(projection);
+
+          d3.json(scope.topojsonPath, function (error, json) {
+
+            var layerFeatues = topojson.feature(json, json.objects[scope.layerObjects]).features;
+            var mesh = topojson.mesh(json, json.objects[scope.layerObjects], function(a, b) { return a !== b; });
+
+
+            if (scope.featureNameStyle == 'events') {
+              var color = d3.scale.linear().domain([1,layerFeatues.length])
+                            .interpolate(d3.interpolateHcl)
+                            .range(scope.colorRange.split(","));
+
+              // polygons
+              g.selectAll("path")
+                .data(layerFeatues)
+                .enter().append("path")
+                .attr("class", "layer1")
+                .attr("d", path)
+                .attr("fill", scope.bgColor)
+                .attr("layer-feature-code", function(d) {
+                  return findprop(d, scope.layerFeatureCode);
+                });
+
+              // border
+              g.append("path")
+                .datum(mesh)
+                .attr("d", path)
+                .attr("class", "layer1-boundary");
+
+              // Layer1 labels
+              g.selectAll("text")
+                .data(layerFeatues)
+                .enter().append("text")
+                .attr("class", "label")
+                .style("fill-opacity", 0)
+                .style("display", "none")
+                .attr("transform", function(d) { 
+                  return "translate(" + path.centroid(d) + ")"; 
+                  // return "translate(" + [path.centroid(d)[0], path.centroid(d)[1] - 20] + ")"; 
+                })
+                // .attr("dy", ".35em")
+                .attr("dy", "-1em")
+                .text(function(d) { 
+                  return findprop(d, scope.layerFeatureName); 
+                })
+                .attr("layer-feature-code", function(d) { 
+                  return findprop(d, scope.layerFeatureCode);
+                });
+
+              /***** event data *****/
+              var endall = function(transition, callback) { 
+                var n = 0; 
+                transition 
+                  .each(function() { ++n; }) 
+                  .each("end", function() { if (!--n) callback.apply(this, arguments); }); 
+              }
+
+              var duration = 50;
+
+              var showFeatureNames = function(newFeatureCodes) {
+                g.selectAll("text")
+                  .filter(function(d){
+                    return newFeatureCodes.indexOf(findprop(d, scope.layerFeatureCode)) > -1;
+                  })
+                  .transition()
+                  .duration(duration)
+                  .style("fill-opacity", 1)
+                  .style("display", "block");
+              }
+
+              var hideFeatureNames = function(oldFeatureCodes, newFeatureCodes) {
+                g.selectAll("text")
+                  .filter(function(d){
+                    return oldFeatureCodes.indexOf(findprop(d, scope.layerFeatureCode)) > -1;
+                  })
+                  .transition()
+                  // .duration(duration)
+                  .style("fill-opacity", 0)
+                  .transition()
+                  .style("display", "none")
+                  .call(endall, function() {
+                      if (newFeatureCodes) {
+                        showFeatureNames(newFeatureCodes);    
+                      }
+                  });
+              }
+
+              var restoreFeatures = function(oldFeatureCodes, newFeatureCodes) {
+                g.selectAll("path")
+                  .filter(function(d){
+                    return oldFeatureCodes.indexOf(findprop(d, scope.layerFeatureCode)) > -1;
+                  })
+                  .transition()
+                  // .duration(duration)
+                  .attr("fill", scope.bgColor)
+                  .call(endall, function() {
+                      if (newFeatureCodes) {
+                        highlightFeatures(newFeatureCodes);    
+                      }
+                  });
+              }
+
+              var highlightFeatures = function(newFeatureCodes) {
+                var color = d3.scale.linear().domain([1, newFeatureCodes.length])
+                              .interpolate(d3.interpolateHcl)
+                              .range(scope.colorRange.split(","));
+
+                g.selectAll("path")
+                  .filter(function(d){
+                    return newFeatureCodes.indexOf(findprop(d, scope.layerFeatureCode)) > -1;
+                  })
+                  .transition()
+                  .duration(duration)
+                  // .attr("fill", "red");
+                  .attr("fill", function(d,i) { 
+                    return color(i);
+                  });
+              }
+
+              // rx observeOnScope for data changes and re-render
+              observeOnScope(scope, 'data').subscribe(function(change) {
+                if (!change.oldValue) {
+                  if (change.newValue) {
+                    showFeatureNames(change.newValue);
+                    highlightFeatures(change.newValue);
+                  }
+                } else {
+                  if (change.newValue) {
+                    hideFeatureNames(change.oldValue, change.newValue);
+                    restoreFeatures(change.oldValue, change.newValue);
+                  }
+                }
+              }); 
+              /***** event data *****/
+
+            } else if (scope.featureNameStyle == 'static') {
+              var color = d3.scale.linear().domain([1,layerFeatues.length])
+                            .interpolate(d3.interpolateHcl)
+                            .range(scope.colorRange.split(","));
+
+              // var color = d3.scale.category10();
+
+              // polygons
+              g.selectAll("path")
+                .data(layerFeatues)
+                .enter().append("path")
+                .attr("class", "layer1")
+                .attr("d", path)
+                .attr("fill", function(d,i) { 
+                  return color(i);
+                })
+                .attr("layer-feature-code", function(d) {
+                  return findprop(d, scope.layerFeatureCode);
+                })
+                .attr("layer-feature-name", function(d) {
+                  return findprop(d, scope.layerFeatureName);
+                });
+
+              // border
+              g.append("path")
+                .datum(mesh)
+                .attr("d", path)
+                .attr("class", "layer1-boundary");
+
+              // Layer1 labels
+              g.selectAll("text")
+                .data(layerFeatues)
+                .enter().append("text")
+                .attr("class", "label")
+                .attr("transform", function(d) { 
+                  return "translate(" + path.centroid(d) + ")"; 
+                })
+                .attr("dy", ".35em")
+                .text(function(d) { 
+                  return findprop(d, scope.layerFeatureName); 
+                })
+                .attr("layer-feature-code", function(d) { 
+                  return findprop(d, scope.layerFeatureCode);
+                });
+            } else {
+              var color = d3.scale.linear().domain([1,layerFeatues.length])
+                            .interpolate(d3.interpolateHcl)
+                            .range(scope.colorRange.split(","));
+
+              // polygons
+              g.selectAll("path")
+                .data(layerFeatues)
+                .enter().append("path")
+                .attr("class", "layer1")
+                .attr("d", path)
+                .attr("fill", function(d,i) { 
+                  return color(i);
+                });
+
+              // border
+              g.append("path")
+                .datum(mesh)
+                .attr("d", path)
+                .attr("class", "layer1-boundary");
+            }
+          });
         }
      };
   })
@@ -329,54 +618,12 @@
                           .interpolate(d3.interpolateHcl)
                           .range(scope.colorRange.split(","));
 
-            if (scope.featureNameStyle == 'tip') {
-              /***** d3-tip *****/
-              // Initialize tooltip 
-              var tip = d3.tip().attr('class', 'd3-tip').offset([0, 0])
-                .html(function(text) { 
-                  return "<span style='color:red'><strong>" + text + "</strong></span>";
-                });          
-
-              if (scope.featureNameStyle == 'tip') {
-                g.call(tip); 
-              }
+            if (scope.featureNameStyle == 'hover') {
 
               var mouseover = function(p) {
-                tip.show(findprop(p, scope.layerFeatureName));
-              }
-              
-              var mouseout = function (p) {
-                tip.hide();
-              }
-              /***** d3-tip *****/
+                // console.log(this.tagName);
 
-              // polygons
-              g.selectAll("path")
-                .data(layerFeatues)
-                .enter().append("path")
-                .attr("class", "layer1")
-                .attr("d", path)
-                .attr("fill", function(d,i) { 
-                  return color(i);
-                })
-                .attr("layer-feature-code", function(d) {
-                  return findprop(d, scope.layerFeatureCode);
-                })
-                .attr("layer-feature-name", function(d) {
-                  return findprop(d, scope.layerFeatureName);
-                })
-              .on("mouseover", mouseover)
-              .on("mouseout", mouseout);
 
-              // border
-              g.append("path")
-                .datum(mesh)
-                .attr("d", path)
-                .attr("class", "layer1-boundary");
-
-            } else if (scope.featureNameStyle == 'fading') {
-
-              var mouseover = function(p) {
                 g.selectAll("text")
                   .filter(function(d){
                     return findprop(p, scope.layerFeatureCode) == findprop(d, scope.layerFeatureCode);
@@ -388,6 +635,7 @@
               }
               
               var mouseout = function (p) {
+
                 g.selectAll("text")
                   .filter(function(d){
                     return findprop(p, scope.layerFeatureCode) == findprop(d, scope.layerFeatureCode);
@@ -427,13 +675,16 @@
               g.selectAll("text")
                 .data(layerFeatues)
                 .enter().append("text")
-                .attr("class", "layer1-label")
+                .attr("class", "label")
                 .style("fill-opacity", 0)
                 .style("display", "none")
                 .attr("transform", function(d) { 
+                  // return "translate(" + [path.centroid(d)[0], path.centroid(d)[1] - 20] + ")"; 
                   return "translate(" + path.centroid(d) + ")"; 
                 })
-                .attr("dy", ".35em")
+                // .attr("dy", ".35em")
+                .attr("dy", "-1em")
+                .attr("pointer-events", "none")
                 .text(function(d) { 
                   return findprop(d, scope.layerFeatureName); 
                 })
@@ -467,7 +718,7 @@
               g.selectAll("text")
                 .data(layerFeatues)
                 .enter().append("text")
-                .attr("class", "layer1-label")
+                .attr("class", "label")
                 .attr("transform", function(d) { 
                   return "translate(" + path.centroid(d) + ")"; 
                 })
@@ -511,9 +762,12 @@
             // now we determine the projection's new scale, but there's a problem:
             // the map doesn't 'zoom onto the mouse point'
             projection.scale(s * d3.event.scale);
+
             // redraw the map
             g.selectAll("path").attr("d", path);
-            g.selectAll("text").attr("transform", function(d) { return "translate(" + path.centroid(d) + ")"; });
+            g.selectAll("text").attr("transform", function(d) { 
+              return "translate(" + path.centroid(d) + ")scale(" + d3.event.scale + ")"; 
+            });
           }
 
           svg.call(d3.behavior.zoom().on("zoom", redraw));

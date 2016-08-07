@@ -1,13 +1,12 @@
 {
   "name": "ng-d3geo",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "angular directive for d3.js geo",
   "main": "main/ng-d3geo.js",
   "dependencies": {
     "angular": "~1.5",
     "d3": "3.5.*",
     "topojson": "1.*",
-    "d3-tip": "^0.6.7",
     "rxjs": "*",
     "angular-rx": "~1.1"
   },
