@@ -62,6 +62,8 @@
           var g = svg.append('g');
           var gLayer2 = g.append("g").attr("id", scope.layer2Objects);
           var gLayer1 = g.append("g").attr("id", scope.layer1Objects);
+          var gLabelLayer2 = g.append("g").attr("id", scope.layer2Objects + "_label");
+          var gLabelLayer1 = g.append("g").attr("id", scope.layer1Objects + "_label");
 
           var projection = d3.geo.mercator()
             .center(scope.center.split(","))
@@ -103,7 +105,7 @@
               .on("mouseout", mouseoutLayer2);
 
             // Layer2 labels
-            gLayer2.selectAll("text")
+            gLabelLayer2.selectAll("text")
               .data(layer2Featues)
               .enter().append("text")
               .attr("class", "label")
@@ -145,7 +147,7 @@
               .attr("class", "layer1-boundary");
 
             // Layer1 labels
-            gLayer1.selectAll("text")
+            gLabelLayer1.selectAll("text")
               .data(layer1Featues)
               .enter().append("text")
               .attr("class", "label")
@@ -208,7 +210,7 @@
             zoom(d);
           };
 
-/*
+
           var zoom = function(d) {
             var bounds = path.bounds(d),
                 dx = bounds[1][0] - bounds[0][0],
@@ -219,14 +221,14 @@
                 translate = [width / 2 - scale * x, height / 2 - scale * y];
 
             g.transition()
-                .duration(750)
-                .style("stroke-width", 1.5 / scale + "px")
-                .attr("transform", "translate(" + translate + ")scale(" + scale + ")");
+              .duration(750)
+              .style("stroke-width", 1.5 / scale + "px")
+              .attr("transform", "translate(" + translate + ")scale(" + scale + ")");
 
             // hide layer1 labels
-            gLayer1.selectAll('text')
+            gLabelLayer1.selectAll('text')
               .transition()
-              .duration(750)
+              .duration(250)
               .style("fill-opacity", 0)
               .transition()
               .style("display", "none");
@@ -247,71 +249,20 @@
               .attr("transform", "");
 
             // show layer1 labels
-            gLayer1.selectAll('text')
+            gLabelLayer1.selectAll('text')
               .transition()
               .style("display", "block")
               .transition()
-              .duration(750)
+              .duration(250)
               .style("fill-opacity", 1);
 
             scope.onStopEvents();
           };
-*/
-
-
-          var zoom = function(d) {
-            var bounds = path.bounds(d),
-                dx = bounds[1][0] - bounds[0][0],
-                dy = bounds[1][1] - bounds[0][1],
-                x = (bounds[0][0] + bounds[1][0]) / 2,
-                y = (bounds[0][1] + bounds[1][1]) / 2,
-                scale = .9 / Math.max(dx / width, dy / height),
-                translate = [width / 2 - scale * x, height / 2 - scale * y];
-
-            g.transition()
-                .duration(750)
-                .style("stroke-width", 1.5 / scale + "px")
-                .attr("transform", "translate(" + translate + ")scale(" + scale + ")");
-
-            // hide layer1 labels
-            gLayer1.selectAll('text')
-              .transition()
-              .duration(750)
-              .style("fill-opacity", 0)
-              .transition()
-              .style("display", "none");
-
-            // callback to notify the specified feature is ready to receive location events
-            var featureCode = findprop(d, scope.layer1FeatureCode);
-            scope.onStopEvents();
-            scope.onReceiveEvents({feature: featureCode});
-          }
-
-          function reset() {
-            active.classed("active", false);
-            active = d3.select(null);
-
-            g.transition()
-              .duration(750)
-              .style("stroke-width", "1.5px")
-              .attr("transform", "");
-
-            // show layer1 labels
-            gLayer1.selectAll('text')
-              .transition()
-              .style("display", "block")
-              .transition()
-              .duration(750)
-              .style("fill-opacity", 1);
-
-            scope.onStopEvents();
-          };
-
           /***** click to zoom *****/
 
           /***** hover *****/
           var mouseoverLayer2 = function(p) {
-            gLayer2.selectAll("text")
+            gLabelLayer2.selectAll("text")
               .filter(function(d){
                 return findprop(p, scope.layer2FeatureCode) == findprop(d, scope.layer2FeatureCode);
               })
@@ -322,7 +273,7 @@
           }
           
           var mouseoutLayer2 = function (p) {
-            gLayer2.selectAll("text")
+            gLabelLayer2.selectAll("text")
               .filter(function(d){
                 return findprop(p, scope.layer2FeatureCode) == findprop(d, scope.layer2FeatureCode);
               })
