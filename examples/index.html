@@ -6,7 +6,6 @@
 
     <script type="text/javascript" src="lib/angular/angular.min.js"></script>
     <script type="text/javascript" src="lib/d3/d3.min.js"></script>
-    <script type="text/javascript" src="lib/d3-tip/d3-tip.js"></script>
     <script type="text/javascript" src="lib/topojson/topojson.min.js"></script>
     <script type="text/javascript" src="lib/rxjs/rx.all.min.js"></script>
     <script type="text/javascript" src="lib/rx-angular/rx.angular.min.js"></script>
@@ -206,11 +205,11 @@ app.controller("2layerMapCtrl", ['$scope', '$http', '$interval', function($scope
   </div>
 
 
-<!--   <br/>
+  <br/>
   <br/>
   <div>
-    <h2>Fixed Scale Tokyo</h2>
-    <div fixed-scale-map
+    <h2>Receiving Events Tokyo</h2>
+    <div receive-events-map
       id="02"
       data="featureCodes"
       topojson-path="data/tokyo_23_blocks_districts_final.json"
@@ -223,37 +222,34 @@ app.controller("2layerMapCtrl", ['$scope', '$http', '$interval', function($scope
       layer-objects="blocks"
       layer-feature-name="properties.block"
       layer-feature-code="properties.block_code"
-      feature-name-style="events"
       >
     </div>
-  </div> -->
+  </div>
 
-<!--   <br/>
+  <br/>
   <br/>
   <div style="width:1500px; height:800px;">
-    <h2>2-Layer Map US</h2>
-    <div 2layer-map
+    <h2>Static Map Tokyo</h2>
+    <div static-map
       id="03"
-      topojson-path="data/us_counties_states_final.json"
-      width="1200"
-      height="600"
-      layer1-color-range="#0d47a1,#e3f2fd"
-      center="-99.736816, 38.818207"
-      scale="1000"
-      layer1-objects="us_states"
-      layer2-objects="us_counties"
-      layer1-feature-name="properties.state_code"
-      layer1-feature-code="properties.state_code"
-      layer2-feature-name="properties.county"
-      layer2-feature-code="properties.county_code"
+      topojson-path="data/tokyo_23_blocks_districts_final.json"
+      width="1000"
+      height="1000"
+      color-range="#0d47a1,#e3f2fd"
+      center="139.752268, 35.677043"
+      scale="110000"
+      layer-objects="blocks"
+      layer-feature-name="properties.block"
+      layer-feature-code="properties.block_code"
+      feature-name-style="hover"
       >
     </div>
-  </div> -->
+  </div>
 
 <!--   <br/>
   <br/>
   <div style="width:1500px; height:800px;">
-    <h2>Zoom & Map US</h2>
+    <h2>Zoom & Map Tokyo</h2>
     <div zoom-pan-map
       id="04"
       topojson-path="data/tokyo_23_blocks_districts_final.json"
@@ -270,19 +266,25 @@ app.controller("2layerMapCtrl", ['$scope', '$http', '$interval', function($scope
     </div>
   </div> -->
 
+
 <!--   <br/>
   <br/>
   <div style="width:1500px; height:800px;">
-    <h2>Zoom & Map US</h2>
-    <div zoom-pan-map
+    <h2>2-Layer Map US</h2>
+    <div 2layer-map
       id="04"
       topojson-path="data/us_counties_states_final.json"
       width="1200"
       height="600"
-      color-range="#0d47a1,#e3f2fd"
+      layer1-color-range="#0d47a1,#e3f2fd"
       center="-99.736816, 38.818207"
       scale="1000"
-      layer-objects="us_states"
+      layer1-objects="us_states"
+      layer2-objects="us_counties"
+      layer1-feature-name="properties.state_code"
+      layer1-feature-code="properties.state_code"
+      layer2-feature-name="properties.county"
+      layer2-feature-code="properties.county_code"
       >
     </div>
   </div> -->

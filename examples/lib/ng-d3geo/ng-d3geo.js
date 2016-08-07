@@ -18,6 +18,192 @@
   }
 
   angular.module('ngD3geo',['rx'])
+  .directive('staticMap', function($parse, $window, observeOnScope){
+     return{
+        restrict:'EA',
+        scope: {
+          data: '=',
+          id: '@',
+          topojsonPath: '@',
+          width: '@',
+          height: '@',
+          bgColor: '@',
+          colorRange: '@',
+          center: '@',
+          scale: '@',
+          layerObjects: '@',
+          layerFeatureName: '@',
+          layerFeatureCode: '@',
+          featureNameStyle: '@'
+        },
+        template:"<svg></svg>",
+        link: function(scope, elem, attrs){
+          var width = scope.width,
+              height = scope.height;
+
+          var d3 = $window.d3;
+
+          var rawSvg = elem.find('svg');
+
+          var svg = d3.select(rawSvg[0])
+            .attr("width", width)
+            .attr("height", height)
+            .attr("style", "outline: thin solid gray;");
+
+          var g = svg.append('g');
+
+          var projection = d3.geo.mercator()
+            .center(scope.center.split(","))
+            .scale(scope.scale)
+            .translate([width / 2, height / 2]);
+
+          var path = d3.geo.path().projection(projection);
+
+          d3.json(scope.topojsonPath, function (error, json) {
+
+            var layerFeatues = topojson.feature(json, json.objects[scope.layerObjects]).features;
+            var mesh = topojson.mesh(json, json.objects[scope.layerObjects], function(a, b) { return a !== b; });
+
+            var color = d3.scale.linear().domain([1,layerFeatues.length])
+                          .interpolate(d3.interpolateHcl)
+                          .range(scope.colorRange.split(","));
+                          
+            if (scope.featureNameStyle == 'static') {
+              // polygons
+              g.selectAll("path")
+                .data(layerFeatues)
+                .enter().append("path")
+                .attr("class", "layer1")
+                .attr("d", path)
+                .attr("fill", function(d,i) { 
+                  return color(i);
+                })
+                .attr("layer-feature-code", function(d) {
+                  return findprop(d, scope.layerFeatureCode);
+                })
+                .attr("layer-feature-name", function(d) {
+                  return findprop(d, scope.layerFeatureName);
+                });
+
+              // border
+              g.append("path")
+                .datum(mesh)
+                .attr("d", path)
+                .attr("class", "layer1-boundary");
+
+              // Layer1 labels
+              g.selectAll("text")
+                .data(layerFeatues)
+                .enter().append("text")
+                .attr("class", "label")
+                .attr("transform", function(d) { 
+                  return "translate(" + path.centroid(d) + ")"; 
+                })
+                .attr("dy", ".35em")
+                .text(function(d) { 
+                  return findprop(d, scope.layerFeatureName); 
+                })
+                .attr("layer-feature-code", function(d) { 
+                  return findprop(d, scope.layerFeatureCode);
+                });
+            } else if (scope.featureNameStyle == 'hover') {
+
+              var mouseover = function(p) {
+                // console.log(this.tagName);
+
+
+                g.selectAll("text")
+                  .filter(function(d){
+                    return findprop(p, scope.layerFeatureCode) == findprop(d, scope.layerFeatureCode);
+                  })
+                  .transition()
+                  .duration(200)
+                  .style("fill-opacity", 1)
+                  .style("display", "block");
+              }
+              
+              var mouseout = function (p) {
+
+                g.selectAll("text")
+                  .filter(function(d){
+                    return findprop(p, scope.layerFeatureCode) == findprop(d, scope.layerFeatureCode);
+                  })
+                  .transition()
+                  .duration(200)
+                  .style("fill-opacity", 0)
+                  .transition()
+                  .style("display", "none");
+              }
+
+              // polygons
+              g.selectAll("path")
+                .data(layerFeatues)
+                .enter().append("path")
+                .attr("class", "layer1")
+                .attr("d", path)
+                .attr("fill", function(d,i) { 
+                  return color(i);
+                })
+                .attr("layer-feature-code", function(d) {
+                  return findprop(d, scope.layerFeatureCode);
+                })
+                .attr("layer-feature-name", function(d) {
+                  return findprop(d, scope.layerFeatureName);
+                })
+                .on("mouseover", mouseover)
+                .on("mouseout", mouseout);
+
+              // border
+              g.append("path")
+                .datum(mesh)
+                .attr("d", path)
+                .attr("class", "layer1-boundary");
+
+              // Layer1 labels
+              g.selectAll("text")
+                .data(layerFeatues)
+                .enter().append("text")
+                .attr("class", "label")
+                .style("fill-opacity", 0)
+                .style("display", "none")
+                .attr("transform", function(d) { 
+                  // return "translate(" + [path.centroid(d)[0], path.centroid(d)[1] - 20] + ")"; 
+                  return "translate(" + path.centroid(d) + ")"; 
+                })
+                // .attr("dy", ".35em")
+                .attr("dy", "-1em")
+                .attr("pointer-events", "none")
+                .text(function(d) { 
+                  return findprop(d, scope.layerFeatureName); 
+                })
+                .attr("layer-feature-code", function(d) { 
+                  return findprop(d, scope.layerFeatureCode);
+                });
+            } else {
+              var color = d3.scale.linear().domain([1,layerFeatues.length])
+                            .interpolate(d3.interpolateHcl)
+                            .range(scope.colorRange.split(","));
+
+              // polygons
+              g.selectAll("path")
+                .data(layerFeatues)
+                .enter().append("path")
+                .attr("class", "layer1")
+                .attr("d", path)
+                .attr("fill", function(d,i) { 
+                  return color(i);
+                });
+
+              // border
+              g.append("path")
+                .datum(mesh)
+                .attr("d", path)
+                .attr("class", "layer1-boundary");
+            }
+          });
+        }
+     };
+  })
   .directive('2layerMap', function($parse, $window, observeOnScope){
      return{
         restrict:'EA',
@@ -325,7 +511,7 @@
         }
      };
   })
-  .directive('fixedScaleMap', function($parse, $window, observeOnScope){
+  .directive('receiveEventsMap', function($parse, $window, observeOnScope){
      return{
         restrict:'EA',
         scope: {
@@ -340,8 +526,7 @@
           scale: '@',
           layerObjects: '@',
           layerFeatureName: '@',
-          layerFeatureCode: '@',
-          featureNameStyle: '@'
+          layerFeatureCode: '@'
         },
         template:"<svg></svg>",
         link: function(scope, elem, attrs){
@@ -371,200 +556,133 @@
             var layerFeatues = topojson.feature(json, json.objects[scope.layerObjects]).features;
             var mesh = topojson.mesh(json, json.objects[scope.layerObjects], function(a, b) { return a !== b; });
 
+            var color = d3.scale.linear().domain([1,layerFeatues.length])
+                          .interpolate(d3.interpolateHcl)
+                          .range(scope.colorRange.split(","));
 
-            if (scope.featureNameStyle == 'events') {
-              var color = d3.scale.linear().domain([1,layerFeatues.length])
-                            .interpolate(d3.interpolateHcl)
-                            .range(scope.colorRange.split(","));
+            // polygons
+            g.selectAll("path")
+              .data(layerFeatues)
+              .enter().append("path")
+              .attr("class", "layer1")
+              .attr("d", path)
+              .attr("fill", scope.bgColor)
+              .attr("layer-feature-code", function(d) {
+                return findprop(d, scope.layerFeatureCode);
+              });
 
-              // polygons
-              g.selectAll("path")
-                .data(layerFeatues)
-                .enter().append("path")
-                .attr("class", "layer1")
-                .attr("d", path)
-                .attr("fill", scope.bgColor)
-                .attr("layer-feature-code", function(d) {
-                  return findprop(d, scope.layerFeatureCode);
-                });
+            // border
+            g.append("path")
+              .datum(mesh)
+              .attr("d", path)
+              .attr("class", "layer1-boundary");
 
-              // border
-              g.append("path")
-                .datum(mesh)
-                .attr("d", path)
-                .attr("class", "layer1-boundary");
+            // Layer1 labels
+            g.selectAll("text")
+              .data(layerFeatues)
+              .enter().append("text")
+              .attr("class", "label")
+              .style("fill-opacity", 0)
+              .style("display", "none")
+              .attr("transform", function(d) { 
+                return "translate(" + path.centroid(d) + ")"; 
+                // return "translate(" + [path.centroid(d)[0], path.centroid(d)[1] - 20] + ")"; 
+              })
+              // .attr("dy", ".35em")
+              .attr("dy", "-1em")
+              .text(function(d) { 
+                return findprop(d, scope.layerFeatureName); 
+              })
+              .attr("layer-feature-code", function(d) { 
+                return findprop(d, scope.layerFeatureCode);
+              });
 
-              // Layer1 labels
-              g.selectAll("text")
-                .data(layerFeatues)
-                .enter().append("text")
-                .attr("class", "label")
-                .style("fill-opacity", 0)
-                .style("display", "none")
-                .attr("transform", function(d) { 
-                  return "translate(" + path.centroid(d) + ")"; 
-                  // return "translate(" + [path.centroid(d)[0], path.centroid(d)[1] - 20] + ")"; 
-                })
-                // .attr("dy", ".35em")
-                .attr("dy", "-1em")
-                .text(function(d) { 
-                  return findprop(d, scope.layerFeatureName); 
-                })
-                .attr("layer-feature-code", function(d) { 
-                  return findprop(d, scope.layerFeatureCode);
-                });
-
-              /***** event data *****/
-              var endall = function(transition, callback) { 
-                var n = 0; 
-                transition 
-                  .each(function() { ++n; }) 
-                  .each("end", function() { if (!--n) callback.apply(this, arguments); }); 
-              }
-
-              var duration = 50;
-
-              var showFeatureNames = function(newFeatureCodes) {
-                g.selectAll("text")
-                  .filter(function(d){
-                    return newFeatureCodes.indexOf(findprop(d, scope.layerFeatureCode)) > -1;
-                  })
-                  .transition()
-                  .duration(duration)
-                  .style("fill-opacity", 1)
-                  .style("display", "block");
-              }
-
-              var hideFeatureNames = function(oldFeatureCodes, newFeatureCodes) {
-                g.selectAll("text")
-                  .filter(function(d){
-                    return oldFeatureCodes.indexOf(findprop(d, scope.layerFeatureCode)) > -1;
-                  })
-                  .transition()
-                  // .duration(duration)
-                  .style("fill-opacity", 0)
-                  .transition()
-                  .style("display", "none")
-                  .call(endall, function() {
-                      if (newFeatureCodes) {
-                        showFeatureNames(newFeatureCodes);    
-                      }
-                  });
-              }
-
-              var restoreFeatures = function(oldFeatureCodes, newFeatureCodes) {
-                g.selectAll("path")
-                  .filter(function(d){
-                    return oldFeatureCodes.indexOf(findprop(d, scope.layerFeatureCode)) > -1;
-                  })
-                  .transition()
-                  // .duration(duration)
-                  .attr("fill", scope.bgColor)
-                  .call(endall, function() {
-                      if (newFeatureCodes) {
-                        highlightFeatures(newFeatureCodes);    
-                      }
-                  });
-              }
-
-              var highlightFeatures = function(newFeatureCodes) {
-                var color = d3.scale.linear().domain([1, newFeatureCodes.length])
-                              .interpolate(d3.interpolateHcl)
-                              .range(scope.colorRange.split(","));
-
-                g.selectAll("path")
-                  .filter(function(d){
-                    return newFeatureCodes.indexOf(findprop(d, scope.layerFeatureCode)) > -1;
-                  })
-                  .transition()
-                  .duration(duration)
-                  // .attr("fill", "red");
-                  .attr("fill", function(d,i) { 
-                    return color(i);
-                  });
-              }
-
-              // rx observeOnScope for data changes and re-render
-              observeOnScope(scope, 'data').subscribe(function(change) {
-                if (!change.oldValue) {
-                  if (change.newValue) {
-                    showFeatureNames(change.newValue);
-                    highlightFeatures(change.newValue);
-                  }
-                } else {
-                  if (change.newValue) {
-                    hideFeatureNames(change.oldValue, change.newValue);
-                    restoreFeatures(change.oldValue, change.newValue);
-                  }
-                }
-              }); 
-              /***** event data *****/
-
-            } else if (scope.featureNameStyle == 'static') {
-              var color = d3.scale.linear().domain([1,layerFeatues.length])
-                            .interpolate(d3.interpolateHcl)
-                            .range(scope.colorRange.split(","));
-
-              // var color = d3.scale.category10();
-
-              // polygons
-              g.selectAll("path")
-                .data(layerFeatues)
-                .enter().append("path")
-                .attr("class", "layer1")
-                .attr("d", path)
-                .attr("fill", function(d,i) { 
-                  return color(i);
-                })
-                .attr("layer-feature-code", function(d) {
-                  return findprop(d, scope.layerFeatureCode);
-                })
-                .attr("layer-feature-name", function(d) {
-                  return findprop(d, scope.layerFeatureName);
-                });
-
-              // border
-              g.append("path")
-                .datum(mesh)
-                .attr("d", path)
-                .attr("class", "layer1-boundary");
-
-              // Layer1 labels
-              g.selectAll("text")
-                .data(layerFeatues)
-                .enter().append("text")
-                .attr("class", "label")
-                .attr("transform", function(d) { 
-                  return "translate(" + path.centroid(d) + ")"; 
-                })
-                .attr("dy", ".35em")
-                .text(function(d) { 
-                  return findprop(d, scope.layerFeatureName); 
-                })
-                .attr("layer-feature-code", function(d) { 
-                  return findprop(d, scope.layerFeatureCode);
-                });
-            } else {
-              var color = d3.scale.linear().domain([1,layerFeatues.length])
-                            .interpolate(d3.interpolateHcl)
-                            .range(scope.colorRange.split(","));
-
-              // polygons
-              g.selectAll("path")
-                .data(layerFeatues)
-                .enter().append("path")
-                .attr("class", "layer1")
-                .attr("d", path)
-                .attr("fill", function(d,i) { 
-                  return color(i);
-                });
-
-              // border
-              g.append("path")
-                .datum(mesh)
-                .attr("d", path)
-                .attr("class", "layer1-boundary");
+            /***** event data *****/
+            var endall = function(transition, callback) { 
+              var n = 0; 
+              transition 
+                .each(function() { ++n; }) 
+                .each("end", function() { if (!--n) callback.apply(this, arguments); }); 
             }
+
+            var duration = 50;
+
+            var showFeatureNames = function(newFeatureCodes) {
+              g.selectAll("text")
+                .filter(function(d){
+                  return newFeatureCodes.indexOf(findprop(d, scope.layerFeatureCode)) > -1;
+                })
+                .transition()
+                .duration(duration)
+                .style("fill-opacity", 1)
+                .style("display", "block");
+            }
+
+            var hideFeatureNames = function(oldFeatureCodes, newFeatureCodes) {
+              g.selectAll("text")
+                .filter(function(d){
+                  return oldFeatureCodes.indexOf(findprop(d, scope.layerFeatureCode)) > -1;
+                })
+                .transition()
+                // .duration(duration)
+                .style("fill-opacity", 0)
+                .transition()
+                .style("display", "none")
+                .call(endall, function() {
+                    if (newFeatureCodes) {
+                      showFeatureNames(newFeatureCodes);    
+                    }
+                });
+            }
+
+            var restoreFeatures = function(oldFeatureCodes, newFeatureCodes) {
+              g.selectAll("path")
+                .filter(function(d){
+                  return oldFeatureCodes.indexOf(findprop(d, scope.layerFeatureCode)) > -1;
+                })
+                .transition()
+                // .duration(duration)
+                .attr("fill", scope.bgColor)
+                .call(endall, function() {
+                    if (newFeatureCodes) {
+                      highlightFeatures(newFeatureCodes);    
+                    }
+                });
+            }
+
+            var highlightFeatures = function(newFeatureCodes) {
+              var color = d3.scale.linear().domain([1, newFeatureCodes.length])
+                            .interpolate(d3.interpolateHcl)
+                            .range(scope.colorRange.split(","));
+
+              g.selectAll("path")
+                .filter(function(d){
+                  return newFeatureCodes.indexOf(findprop(d, scope.layerFeatureCode)) > -1;
+                })
+                .transition()
+                .duration(duration)
+                // .attr("fill", "red");
+                .attr("fill", function(d,i) { 
+                  return color(i);
+                });
+            }
+
+            // rx observeOnScope for data changes and re-render
+            observeOnScope(scope, 'data').subscribe(function(change) {
+              if (!change.oldValue) {
+                if (change.newValue) {
+                  showFeatureNames(change.newValue);
+                  highlightFeatures(change.newValue);
+                }
+              } else {
+                if (change.newValue) {
+                  hideFeatureNames(change.oldValue, change.newValue);
+                  restoreFeatures(change.oldValue, change.newValue);
+                }
+              }
+            }); 
+            /***** event data *****/
+
           });
         }
      };
