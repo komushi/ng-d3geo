@@ -46,12 +46,6 @@
 
           var d3 = $window.d3;
 
-          /* Initialize tooltip */
-          var tip = d3.tip().attr('class', 'd3-tip').offset([-30, 0])
-            .html(function(text) { 
-              return "<span style='color:red'><strong>" + text + "</strong></span>";
-            });
-
           var rawSvg = elem.find('svg');
 
           var svg = d3.select(rawSvg[0])
@@ -65,7 +59,7 @@
                         .attr("height", height)
                         .on("click", reset);
 
-          var g = svg.append('g').call(tip);
+          var g = svg.append('g');
           var gLayer2 = g.append("g").attr("id", scope.layer2Objects);
           var gLayer1 = g.append("g").attr("id", scope.layer1Objects);
 
@@ -108,6 +102,25 @@
               .on("mouseover", mouseoverLayer2)
               .on("mouseout", mouseoutLayer2);
 
+            // Layer2 labels
+            gLayer2.selectAll("text")
+              .data(layer2Featues)
+              .enter().append("text")
+              .attr("class", "label")
+              .style("fill-opacity", 0)
+              .style("display", "none")
+              .attr("transform", function(d) { 
+                return "translate(" + path.centroid(d) + ")"; 
+              })
+              .attr("dy", "-1em")
+              .attr("pointer-events", "none")
+              .text(function(d) { 
+                return findprop(d, scope.layer2FeatureName); 
+              })
+              .attr("layer2-feature-code", function(d) { 
+                return findprop(d, scope.layer2FeatureCode);
+              });
+
             // Layer1 polygons
             gLayer1.selectAll("path")
               .data(layer1Featues)
@@ -135,7 +148,7 @@
             gLayer1.selectAll("text")
               .data(layer1Featues)
               .enter().append("text")
-              .attr("class", "layer1-label")
+              .attr("class", "label")
               .attr("transform", function(d) { 
                 return "translate(" + path.centroid(d) + ")"; 
               })
@@ -195,6 +208,7 @@
             zoom(d);
           };
 
+/*
           var zoom = function(d) {
             var bounds = path.bounds(d),
                 dx = bounds[1][0] - bounds[0][0],
@@ -211,6 +225,10 @@
 
             // hide layer1 labels
             gLayer1.selectAll('text')
+              .transition()
+              .duration(750)
+              .style("fill-opacity", 0)
+              .transition()
               .style("display", "none");
 
             // callback to notify the specified feature is ready to receive location events
@@ -224,27 +242,97 @@
             active = d3.select(null);
 
             g.transition()
-                .duration(750)
-                .style("stroke-width", "1.5px")
-                .attr("transform", "");
+              .duration(750)
+              .style("stroke-width", "1.5px")
+              .attr("transform", "");
 
             // show layer1 labels
             gLayer1.selectAll('text')
-              .style("display", "block");
+              .transition()
+              .style("display", "block")
+              .transition()
+              .duration(750)
+              .style("fill-opacity", 1);
 
             scope.onStopEvents();
           };
+*/
+
+
+          var zoom = function(d) {
+            var bounds = path.bounds(d),
+                dx = bounds[1][0] - bounds[0][0],
+                dy = bounds[1][1] - bounds[0][1],
+                x = (bounds[0][0] + bounds[1][0]) / 2,
+                y = (bounds[0][1] + bounds[1][1]) / 2,
+                scale = .9 / Math.max(dx / width, dy / height),
+                translate = [width / 2 - scale * x, height / 2 - scale * y];
+
+            g.transition()
+                .duration(750)
+                .style("stroke-width", 1.5 / scale + "px")
+                .attr("transform", "translate(" + translate + ")scale(" + scale + ")");
+
+            // hide layer1 labels
+            gLayer1.selectAll('text')
+              .transition()
+              .duration(750)
+              .style("fill-opacity", 0)
+              .transition()
+              .style("display", "none");
+
+            // callback to notify the specified feature is ready to receive location events
+            var featureCode = findprop(d, scope.layer1FeatureCode);
+            scope.onStopEvents();
+            scope.onReceiveEvents({feature: featureCode});
+          }
+
+          function reset() {
+            active.classed("active", false);
+            active = d3.select(null);
+
+            g.transition()
+              .duration(750)
+              .style("stroke-width", "1.5px")
+              .attr("transform", "");
+
+            // show layer1 labels
+            gLayer1.selectAll('text')
+              .transition()
+              .style("display", "block")
+              .transition()
+              .duration(750)
+              .style("fill-opacity", 1);
+
+            scope.onStopEvents();
+          };
+
           /***** click to zoom *****/
 
-          /***** d3-tip *****/
+          /***** hover *****/
           var mouseoverLayer2 = function(p) {
-            tip.show(findprop(p, scope.layer1FeatureName) + ' ' + findprop(p, scope.layer2FeatureName));
+            gLayer2.selectAll("text")
+              .filter(function(d){
+                return findprop(p, scope.layer2FeatureCode) == findprop(d, scope.layer2FeatureCode);
+              })
+              .transition()
+              .duration(200)
+              .style("fill-opacity", 1)
+              .style("display", "block");
           }
           
-          var mouseoutLayer2 = function () {
-            tip.hide();
+          var mouseoutLayer2 = function (p) {
+            gLayer2.selectAll("text")
+              .filter(function(d){
+                return findprop(p, scope.layer2FeatureCode) == findprop(d, scope.layer2FeatureCode);
+              })
+              .transition()
+              .duration(200)
+              .style("fill-opacity", 0)
+              .transition()
+              .style("display", "none");
           }
-          /***** d3-tip *****/
+          /***** hover *****/
 
           /***** event data *****/
           var duration = 1500;
@@ -359,14 +447,15 @@
               g.selectAll("text")
                 .data(layerFeatues)
                 .enter().append("text")
-                .attr("class", "layer1-label")
+                .attr("class", "label")
                 .style("fill-opacity", 0)
                 .style("display", "none")
                 .attr("transform", function(d) { 
-                  // return "translate(" + path.centroid(d) + ")"; 
-                  return "translate(" + [path.centroid(d)[0], path.centroid(d)[1] - 20] + ")"; 
+                  return "translate(" + path.centroid(d) + ")"; 
+                  // return "translate(" + [path.centroid(d)[0], path.centroid(d)[1] - 20] + ")"; 
                 })
-                .attr("dy", ".35em")
+                // .attr("dy", ".35em")
+                .attr("dy", "-1em")
                 .text(function(d) { 
                   return findprop(d, scope.layerFeatureName); 
                 })
@@ -493,7 +582,7 @@
               g.selectAll("text")
                 .data(layerFeatues)
                 .enter().append("text")
-                .attr("class", "layer1-label")
+                .attr("class", "label")
                 .attr("transform", function(d) { 
                   return "translate(" + path.centroid(d) + ")"; 
                 })
@@ -578,54 +667,12 @@
                           .interpolate(d3.interpolateHcl)
                           .range(scope.colorRange.split(","));
 
-            if (scope.featureNameStyle == 'tip') {
-              /***** d3-tip *****/
-              // Initialize tooltip 
-              var tip = d3.tip().attr('class', 'd3-tip').offset([0, 0])
-                .html(function(text) { 
-                  return "<span style='color:red'><strong>" + text + "</strong></span>";
-                });          
-
-              if (scope.featureNameStyle == 'tip') {
-                g.call(tip); 
-              }
+            if (scope.featureNameStyle == 'hover') {
 
               var mouseover = function(p) {
-                tip.show(findprop(p, scope.layerFeatureName));
-              }
-              
-              var mouseout = function (p) {
-                tip.hide();
-              }
-              /***** d3-tip *****/
+                // console.log(this.tagName);
 
-              // polygons
-              g.selectAll("path")
-                .data(layerFeatues)
-                .enter().append("path")
-                .attr("class", "layer1")
-                .attr("d", path)
-                .attr("fill", function(d,i) { 
-                  return color(i);
-                })
-                .attr("layer-feature-code", function(d) {
-                  return findprop(d, scope.layerFeatureCode);
-                })
-                .attr("layer-feature-name", function(d) {
-                  return findprop(d, scope.layerFeatureName);
-                })
-              .on("mouseover", mouseover)
-              .on("mouseout", mouseout);
 
-              // border
-              g.append("path")
-                .datum(mesh)
-                .attr("d", path)
-                .attr("class", "layer1-boundary");
-
-            } else if (scope.featureNameStyle == 'fading') {
-
-              var mouseover = function(p) {
                 g.selectAll("text")
                   .filter(function(d){
                     return findprop(p, scope.layerFeatureCode) == findprop(d, scope.layerFeatureCode);
@@ -637,6 +684,7 @@
               }
               
               var mouseout = function (p) {
+
                 g.selectAll("text")
                   .filter(function(d){
                     return findprop(p, scope.layerFeatureCode) == findprop(d, scope.layerFeatureCode);
@@ -676,13 +724,16 @@
               g.selectAll("text")
                 .data(layerFeatues)
                 .enter().append("text")
-                .attr("class", "layer1-label")
+                .attr("class", "label")
                 .style("fill-opacity", 0)
                 .style("display", "none")
                 .attr("transform", function(d) { 
+                  // return "translate(" + [path.centroid(d)[0], path.centroid(d)[1] - 20] + ")"; 
                   return "translate(" + path.centroid(d) + ")"; 
                 })
-                .attr("dy", ".35em")
+                // .attr("dy", ".35em")
+                .attr("dy", "-1em")
+                .attr("pointer-events", "none")
                 .text(function(d) { 
                   return findprop(d, scope.layerFeatureName); 
                 })
@@ -716,7 +767,7 @@
               g.selectAll("text")
                 .data(layerFeatues)
                 .enter().append("text")
-                .attr("class", "layer1-label")
+                .attr("class", "label")
                 .attr("transform", function(d) { 
                   return "translate(" + path.centroid(d) + ")"; 
                 })
@@ -760,9 +811,12 @@
             // now we determine the projection's new scale, but there's a problem:
             // the map doesn't 'zoom onto the mouse point'
             projection.scale(s * d3.event.scale);
+
             // redraw the map
             g.selectAll("path").attr("d", path);
-            g.selectAll("text").attr("transform", function(d) { return "translate(" + path.centroid(d) + ")"; });
+            g.selectAll("text").attr("transform", function(d) { 
+              return "translate(" + path.centroid(d) + ")scale(" + d3.event.scale + ")"; 
+            });
           }
 
           svg.call(d3.behavior.zoom().on("zoom", redraw));

@@ -158,23 +158,23 @@ app.controller("2layerMapCtrl", ['$scope', '$http', '$interval', function($scope
 */
 
 
-  // var featureCodes =
-  // ['1010360', '1010110', '1020070', '1020090', '1190350', '1190210', '1190100', '1190130', '1190050', '1170160', '1030120', '1110250', '1110210', '1130180', '1130150', '1040850', '1040640', '1040630', '1040540', '1040380', '1040430', '1040290', '1040040', '1120050', '1010080', '1010180'];
+  var featureCodes =
+  ['1010360', '1010110', '1020070', '1020090', '1190350', '1190210', '1190100', '1190130', '1190050', '1170160', '1030120', '1110250', '1110210', '1130180', '1130150', '1040850', '1040640', '1040630', '1040540', '1040380', '1040430', '1040290', '1040040', '1120050', '1010080', '1010180'];
 
-  // $interval(function(){
-  //   var min = 0;
-  //   var max = featureCodes.length - 1;
+  $interval(function(){
+    var min = 0;
+    var max = featureCodes.length - 1;
 
-  //   var codes = [];
+    var codes = [];
 
-  //   for (i = 0; i < 10; i++) {
-  //     var from = Math.floor(Math.random() * (max - min + 1)) + min;
-  //     codes.push(featureCodes.slice(from, from + 1)[0]);      
-  //   }
+    for (i = 0; i < 10; i++) {
+      var from = Math.floor(Math.random() * (max - min + 1)) + min;
+      codes.push(featureCodes.slice(from, from + 1)[0]);      
+    }
 
-  //   $scope.featureCodes = codes;
+    $scope.featureCodes = codes;
 
-  // }, 2000);
+  }, 2000);
 
 
 }]);
@@ -182,7 +182,7 @@ app.controller("2layerMapCtrl", ['$scope', '$http', '$interval', function($scope
 
 <div ng-controller="2layerMapCtrl">
 
-<!--   <div>
+  <div>
     <h2>2-Layer Map Tokyo</h2>
     <div 2layer-map
       id="01"
@@ -203,10 +203,10 @@ app.controller("2layerMapCtrl", ['$scope', '$http', '$interval', function($scope
       on-stop-events="unsubEvents()"
       >
     </div>
-  </div> -->
+  </div>
 
 
-  <br/>
+<!--   <br/>
   <br/>
   <div>
     <h2>Fixed Scale Tokyo</h2>
@@ -226,7 +226,7 @@ app.controller("2layerMapCtrl", ['$scope', '$http', '$interval', function($scope
       feature-name-style="events"
       >
     </div>
-  </div>
+  </div> -->
 
 <!--   <br/>
   <br/>
@@ -256,16 +256,16 @@ app.controller("2layerMapCtrl", ['$scope', '$http', '$interval', function($scope
     <h2>Zoom & Map US</h2>
     <div zoom-pan-map
       id="04"
-      topojson-path="data/us_counties_states_final.json"
-      width="1200"
-      height="600"
+      topojson-path="data/tokyo_23_blocks_districts_final.json"
+      width="1000"
+      height="1000"
       color-range="#0d47a1,#e3f2fd"
-      center="-99.736816, 38.818207"
-      scale="1000"
-      layer-objects="us_states"
-      layer-feature-name="properties.state_code"
-      layer-feature-code="properties.state_code"
-      feature-name-style="tip"
+      center="139.752268, 35.677043"
+      scale="110000"
+      layer-objects="blocks"
+      layer-feature-name="properties.block"
+      layer-feature-code="properties.block_code"
+      feature-name-style="hover"
       >
     </div>
   </div> -->
