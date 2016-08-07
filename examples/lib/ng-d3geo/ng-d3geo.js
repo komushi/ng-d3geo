@@ -543,6 +543,8 @@
             .attr("style", "outline: thin solid gray;");
 
           var g = svg.append('g');
+          var gLayer = g.append("g").attr("id", scope.layerObjects);
+          var gLabelLayer = g.append("g").attr("id", scope.layerObjects + "_label");
 
           var projection = d3.geo.mercator()
             .center(scope.center.split(","))
@@ -557,7 +559,7 @@
             var mesh = topojson.mesh(json, json.objects[scope.layerObjects], function(a, b) { return a !== b; });
 
             // polygons
-            g.selectAll("path")
+            gLayer.selectAll("path")
               .data(layerFeatues)
               .enter().append("path")
               .attr("class", "layer1")
@@ -568,13 +570,200 @@
               });
 
             // border
-            g.append("path")
+            gLayer.append("path")
               .datum(mesh)
               .attr("d", path)
               .attr("class", "layer1-boundary");
 
             // Layer1 labels
-            g.selectAll("text")
+            gLabelLayer.selectAll("text")
+              .data(layerFeatues)
+              .enter()
+              .append("text")
+              .attr("class", "label")
+              // .style("fill-opacity", 0)
+              // .style("display", "none")
+              .attr("transform", function(d) { 
+                return "translate(" + path.centroid(d) + ")"; 
+              })
+              .attr("dy", "-1em")
+              // .text(function(d) { 
+              //   return findprop(d, scope.layerFeatureName); 
+              // })
+              // .attr("layer-feature-code", function(d) { 
+              //   return findprop(d, scope.layerFeatureCode);
+              // });
+
+            /***** event data *****/
+            var endall = function(transition, callback) { 
+              var n = 0; 
+              transition 
+                .each(function() { ++n; }) 
+                .each("end", function() { if (!--n) callback.apply(this, arguments); }); 
+            }
+
+            // var duration = 500;
+
+            var showFeatureNames = function(newFeatureCodes) {
+              var color = d3.scale.linear().domain([1, newFeatureCodes.length])
+                            .interpolate(d3.interpolateHcl)
+                            .range(scope.colorRange.split(","));
+
+              gLabelLayer.selectAll("text")
+                .filter(function(d){
+                  return newFeatureCodes.indexOf(findprop(d, scope.layerFeatureCode)) > -1;
+                })
+                .text(function(d){
+                  return findprop(d, scope.layerFeatureName);
+                })
+                .transition()
+                // .duration(duration)
+                .style("fill-opacity", 1)
+                .style("display", "block")
+                .style("fill", function(d,i) {
+                  var index = newFeatureCodes.indexOf(findprop(d, scope.layerFeatureCode));
+                  return color(index);
+                });
+            }
+
+            var hideFeatureNames = function(oldFeatureCodes, newFeatureCodes) {
+              gLabelLayer.selectAll("text")
+                .filter(function(d){
+                  return oldFeatureCodes.indexOf(findprop(d, scope.layerFeatureCode)) > -1;
+                })
+                .transition()
+                // .duration(duration)
+                .style("fill-opacity", 0)
+                .transition()
+                // .style("display", "none")
+                .text("")
+                .attr("style", "")
+                .call(endall, function() {
+                    if (newFeatureCodes) {
+                      showFeatureNames(newFeatureCodes);    
+                    }
+                });
+            }
+
+            var dehighlightFeatures = function(oldFeatureCodes, newFeatureCodes) {
+              gLayer.selectAll("path")
+                .filter(function(d){
+                  return oldFeatureCodes.indexOf(findprop(d, scope.layerFeatureCode)) > -1;
+                })
+                .transition()
+                .attr("fill", scope.bgColor)
+                .call(endall, function() {
+                    if (newFeatureCodes) {
+                      highlightFeatures(newFeatureCodes);    
+                    }
+                });
+            }
+
+            var highlightFeatures = function(newFeatureCodes) {
+
+              var color = d3.scale.linear().domain([1, newFeatureCodes.length])
+                            .interpolate(d3.interpolateHcl)
+                            .range(scope.colorRange.split(","));
+
+
+              gLayer.selectAll("path")
+                .filter(function(d){
+                  return newFeatureCodes.indexOf(findprop(d, scope.layerFeatureCode)) > -1;
+                })
+                .transition()
+                // .duration(duration)
+                .attr("fill", function(d,i) {
+                  var index = newFeatureCodes.indexOf(findprop(d, scope.layerFeatureCode));
+                  return color(index);
+                });
+            }
+
+            // rx observeOnScope for data changes and re-render
+            observeOnScope(scope, 'data').subscribe(function(change) {
+              if (!change.oldValue) {
+                if (change.newValue) {
+                  showFeatureNames(change.newValue);
+                  highlightFeatures(change.newValue);
+                }
+              } else {
+                if (change.newValue) {
+                  hideFeatureNames(change.oldValue, change.newValue);
+                  dehighlightFeatures(change.oldValue, change.newValue);
+                }
+              }
+            }); 
+            /***** event data *****/
+
+          });
+        }
+     };
+  })
+  .directive('routeEventsMap', function($parse, $window, observeOnScope){
+     return{
+        restrict:'EA',
+        scope: {
+          data: '=',
+          id: '@',
+          topojsonPath: '@',
+          width: '@',
+          height: '@',
+          bgColor: '@',
+          colorRange: '@',
+          center: '@',
+          scale: '@',
+          layerObjects: '@',
+          layerFeatureName: '@',
+          layerFeatureCode: '@'
+        },
+        template:"<svg></svg>",
+        link: function(scope, elem, attrs){
+          var width = scope.width,
+              height = scope.height;
+
+          var d3 = $window.d3;
+
+          var rawSvg = elem.find('svg');
+
+          var svg = d3.select(rawSvg[0])
+            .attr("width", width)
+            .attr("height", height)
+            .attr("style", "outline: thin solid gray;");
+
+          var g = svg.append('g');
+          var gLayer = g.append("g").attr("id", scope.layerObjects);
+          var gLabelLayer = g.append("g").attr("id", scope.layerObjects + "_label");
+
+          var projection = d3.geo.mercator()
+            .center(scope.center.split(","))
+            .scale(scope.scale)
+            .translate([width / 2, height / 2]);
+
+          var path = d3.geo.path().projection(projection);
+
+          d3.json(scope.topojsonPath, function (error, json) {
+
+            var layerFeatues = topojson.feature(json, json.objects[scope.layerObjects]).features;
+            var mesh = topojson.mesh(json, json.objects[scope.layerObjects], function(a, b) { return a !== b; });
+
+            // polygons
+            gLayer.selectAll("path")
+              .data(layerFeatues)
+              .enter().append("path")
+              .attr("class", "layer1")
+              .attr("d", path)
+              .attr("fill", scope.bgColor)
+              .attr("layer-feature-code", function(d) {
+                return findprop(d, scope.layerFeatureCode);
+              });
+
+            // border
+            gLayer.append("path")
+              .datum(mesh)
+              .attr("d", path)
+              .attr("class", "layer1-boundary");
+
+            // Layer1 labels
+            gLabelLayer.selectAll("text")
               .data(layerFeatues)
               .enter().append("text")
               .attr("class", "label")
@@ -582,9 +771,7 @@
               .style("display", "none")
               .attr("transform", function(d) { 
                 return "translate(" + path.centroid(d) + ")"; 
-                // return "translate(" + [path.centroid(d)[0], path.centroid(d)[1] - 20] + ")"; 
               })
-              // .attr("dy", ".35em")
               .attr("dy", "-1em")
               .text(function(d) { 
                 return findprop(d, scope.layerFeatureName); 
@@ -608,9 +795,13 @@
                             .interpolate(d3.interpolateHcl)
                             .range(scope.colorRange.split(","));
 
-              g.selectAll("text")
+              gLabelLayer.selectAll("text")
                 .filter(function(d){
                   return newFeatureCodes.indexOf(findprop(d, scope.layerFeatureCode)) > -1;
+                })
+                .text(function(d){
+                  // return (newFeatureCodes.indexOf(findprop(d, scope.layerFeatureCode)) + 1) + ":" + findprop(d, scope.layerFeatureName);
+                  return findprop(d, scope.layerFeatureName);
                 })
                 .transition()
                 .duration(duration)
@@ -623,7 +814,7 @@
             }
 
             var hideFeatureNames = function(oldFeatureCodes, newFeatureCodes) {
-              g.selectAll("text")
+              gLabelLayer.selectAll("text")
                 .filter(function(d){
                   return oldFeatureCodes.indexOf(findprop(d, scope.layerFeatureCode)) > -1;
                 })
@@ -640,7 +831,7 @@
             }
 
             var dehighlightFeatures = function(oldFeatureCodes, newFeatureCodes) {
-              g.selectAll("path")
+              gLayer.selectAll("path")
                 .filter(function(d){
                   return oldFeatureCodes.indexOf(findprop(d, scope.layerFeatureCode)) > -1;
                 })
@@ -660,8 +851,7 @@
                             .interpolate(d3.interpolateHcl)
                             .range(scope.colorRange.split(","));
 
-
-              g.selectAll("path")
+              gLayer.selectAll("path")
                 .filter(function(d){
                   return newFeatureCodes.indexOf(findprop(d, scope.layerFeatureCode)) > -1;
                 })
@@ -673,19 +863,52 @@
                 });
             }
 
+            var extractCodes = function(routes, key) {
+              var featureCodes = [];
+              routes.forEach(function(entry) {
+                  featureCodes.push(entry[key]);
+              });
+
+              return featureCodes;
+            }
+
             // rx observeOnScope for data changes and re-render
             observeOnScope(scope, 'data').subscribe(function(change) {
               if (!change.oldValue) {
                 if (change.newValue) {
-                  showFeatureNames(change.newValue);
-                  highlightFeatures(change.newValue);
+                  var newFromFeatureCodes = extractCodes(change.newValue, "from");
+                  var newToFeatureCodes = extractCodes(change.newValue, "to");
+                  showFeatureNames(newFromFeatureCodes);
+                  showFeatureNames(newToFeatureCodes);
+                  highlightFeatures(newFromFeatureCodes);
+                  highlightFeatures(newToFeatureCodes);
                 }
               } else {
                 if (change.newValue) {
-                  hideFeatureNames(change.oldValue, change.newValue);
-                  dehighlightFeatures(change.oldValue, change.newValue);
+                  var newFromFeatureCodes = extractCodes(change.newValue, "from");
+                  var newToFeatureCodes = extractCodes(change.newValue, "to");
+                  var oldFromFeatureCodes = extractCodes(change.oldValue, "from");
+                  var oldToFeatureCodes = extractCodes(change.oldValue, "to");
+
+                  hideFeatureNames(oldFromFeatureCodes, newFromFeatureCodes);
+                  hideFeatureNames(oldToFeatureCodes, newToFeatureCodes);
+                  dehighlightFeatures(oldFromFeatureCodes, newFromFeatureCodes);
+                  dehighlightFeatures(oldToFeatureCodes, newToFeatureCodes);
                 }
               }
+              
+
+              // if (!change.oldValue) {
+              //   if (change.newValue) {
+              //     showFeatureNames(change.newValue);
+              //     highlightFeatures(change.newValue);
+              //   }
+              // } else {
+              //   if (change.newValue) {
+              //     hideFeatureNames(change.oldValue, change.newValue);
+              //     dehighlightFeatures(change.oldValue, change.newValue);
+              //   }
+              // }
             }); 
             /***** event data *****/
 
