@@ -168,29 +168,29 @@ app.controller("2layerMapCtrl", ['$scope', '$http', '$interval', function($scope
 
     var routes = [];
 
-    for (i = 0; i < 10; i++) {
-      var from = Math.floor(Math.random() * (max - min + 1)) + min;
-      var to = Math.floor(Math.random() * (max - min + 1)) + min;
-      routes.push({from: featureCodes.slice(from, from + 1)[0], to: featureCodes.slice(to, to + 1)[0]});
-    }
-
-
-
-
-
-    // i++;
-    
-    // if (i % 2 == 0) {
-    //   routes.push({from: 1010360, to: 1190130});
-    //   routes.push({from: 1010360, to: 1110150});
-    //   routes.push({from: 1130180, to: 1170160});
-    //   routes.push({from: 1090010, to: 1170160});
-    // } else {
-    //   routes.push({from: 1040850, to: 1060320});
-    //   routes.push({from: 1040850, to: 1150210});
-    //   routes.push({from: 1030120, to: 1110010});
-    //   routes.push({from: 1040040, to: 1110010});
+    // for (i = 0; i < 10; i++) {
+    //   var from = Math.floor(Math.random() * (max - min + 1)) + min;
+    //   var to = Math.floor(Math.random() * (max - min + 1)) + min;
+    //   routes.push({from: featureCodes.slice(from, from + 1)[0], to: featureCodes.slice(to, to + 1)[0]});
     // }
+
+
+
+
+
+    i++;
+    
+    if (i % 2 == 0) {
+      routes.push({from: '1010360', to: '1190130'});
+      routes.push({from: '1010360', to: '1110150'});
+      routes.push({from: '1130180', to: '1170160'});
+      routes.push({from: '1090010', to: '1170160'});
+    } else {
+      routes.push({from: '1040850', to: '1060320'});
+      routes.push({from: '1040850', to: '1150210'});
+      routes.push({from: '1030120', to: '1110010'});
+      routes.push({from: '1040040', to: '1110010'});
+    }
 
     $scope.routes = routes;
 

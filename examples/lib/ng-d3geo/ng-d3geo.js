@@ -929,33 +929,6 @@
                 });
     
             }); 
-
-            // rx observeOnScope for data changes and re-render
-            // observeOnScope(scope, 'data').subscribe(function(change) {
-            //   if (!change.oldValue) {
-            //     if (change.newValue) {
-            //       var newFromFeatureCodes = extractCodes(change.newValue, "from");
-            //       var newToFeatureCodes = extractCodes(change.newValue, "to");
-            //       showFeatureNames(newFromFeatureCodes);
-            //       showFeatureNames(newToFeatureCodes);
-            //       highlightFeatures(newFromFeatureCodes);
-            //       highlightFeatures(newToFeatureCodes);
-            //     }
-            //   } else {
-            //     if (change.newValue) {
-            //       var newFromFeatureCodes = extractCodes(change.newValue, "from");
-            //       var newToFeatureCodes = extractCodes(change.newValue, "to");
-            //       var oldFromFeatureCodes = extractCodes(change.oldValue, "from");
-            //       var oldToFeatureCodes = extractCodes(change.oldValue, "to");
-
-            //       hideFeatureNames(oldFromFeatureCodes, newFromFeatureCodes);
-            //       hideFeatureNames(oldToFeatureCodes, newToFeatureCodes);
-            //       dehighlightFeatures(oldFromFeatureCodes, newFromFeatureCodes);
-            //       dehighlightFeatures(oldToFeatureCodes, newToFeatureCodes);
-            //     }
-            //   }
-              
-            // }); 
             /***** event data *****/
 
           });
