@@ -161,42 +161,60 @@ app.controller("2layerMapCtrl", ['$scope', '$http', '$interval', function($scope
   ['1010360', '1010110', '1020070', '1020190', '1190350', '1150210', '1190100', '1190130', '1190050', '1170160', '1030120', '1110250', '1110210', '1130180', '1130150', '1040850', '1040640', '1040630', '1040540', '1040380', '1040430', '1040290', '1040040', '1120050', '1010080', '1010180', '1010410', '1060030', '1060090', '1060320', '1090010', '1090090', '1090130', '1090210', '1070020', '1070080', '1070190', '1110010', '1110150', '1050180'];
 
 
-  // $interval(function(){
-  //   var min = 0;
-  //   var max = featureCodes.length - 1;
-
-  //   var routes = [];
-
-  //   for (i = 0; i < 10; i++) {
-  //     var from = Math.floor(Math.random() * (max - min + 1)) + min;
-  //     var to = Math.floor(Math.random() * (max - min + 1)) + min;
-  //     routes.push({from: featureCodes.slice(from, from + 1)[0], to: featureCodes.slice(to, to + 1)[0]});
-  //   }
-
-  //   // console.log(JSON.stringify(routes));
-
-  //   $scope.routes = routes;
-
-  // }, 3000);
-
-
+  var i = 0;
   $interval(function(){
     var min = 0;
     var max = featureCodes.length - 1;
 
-    var codes = [];
+    var routes = [];
 
-    while(codes.length < 10) {
+    for (i = 0; i < 10; i++) {
       var from = Math.floor(Math.random() * (max - min + 1)) + min;
-      var code = featureCodes.slice(from, from + 1)[0];
-      if (codes.indexOf(code) == -1) {
-        codes.push(code);        
-      }
+      var to = Math.floor(Math.random() * (max - min + 1)) + min;
+      routes.push({from: featureCodes.slice(from, from + 1)[0], to: featureCodes.slice(to, to + 1)[0]});
     }
 
-    $scope.featureCodes = codes;
+
+
+
+
+    // i++;
+    
+    // if (i % 2 == 0) {
+    //   routes.push({from: 1010360, to: 1190130});
+    //   routes.push({from: 1010360, to: 1110150});
+    //   routes.push({from: 1130180, to: 1170160});
+    //   routes.push({from: 1090010, to: 1170160});
+    // } else {
+    //   routes.push({from: 1040850, to: 1060320});
+    //   routes.push({from: 1040850, to: 1150210});
+    //   routes.push({from: 1030120, to: 1110010});
+    //   routes.push({from: 1040040, to: 1110010});
+    // }
+
+    $scope.routes = routes;
 
   }, 3000);
+  
+
+
+  // $interval(function(){
+  //   var min = 0;
+  //   var max = featureCodes.length - 1;
+
+  //   var codes = [];
+
+  //   while(codes.length < 10) {
+  //     var from = Math.floor(Math.random() * (max - min + 1)) + min;
+  //     var code = featureCodes.slice(from, from + 1)[0];
+  //     if (codes.indexOf(code) == -1) {
+  //       codes.push(code);        
+  //     }
+  //   }
+
+  //   $scope.featureCodes = codes;
+
+  // }, 1500);
 
 
 }]);
@@ -227,7 +245,7 @@ app.controller("2layerMapCtrl", ['$scope', '$http', '$interval', function($scope
     </div>
   </div> -->
 
-<!--   <br/>
+  <br/>
   <br/>
   <div>
     <h2>Route Events Tokyo</h2>
@@ -246,9 +264,9 @@ app.controller("2layerMapCtrl", ['$scope', '$http', '$interval', function($scope
       layer-feature-code="properties.block_code"
       >
     </div>
-  </div> -->
+  </div>
 
-  <br/>
+<!--   <br/>
   <br/>
   <div>
     <h2>Receiving Events Tokyo</h2>
@@ -267,7 +285,7 @@ app.controller("2layerMapCtrl", ['$scope', '$http', '$interval', function($scope
       layer-feature-code="properties.block_code"
       >
     </div>
-  </div>
+  </div> -->
 
 <!--   <br/>
   <br/>

@@ -511,7 +511,7 @@
         }
      };
   })
-  .directive('eventsMap', function($parse, $window, observeOnScope){
+  .directive('eventsMap', function($parse, $window, observeOnScope, $q){
      return{
         restrict:'EA',
         scope: {
@@ -581,18 +581,10 @@
               .enter()
               .append("text")
               .attr("class", "label")
-              // .style("fill-opacity", 0)
-              // .style("display", "none")
               .attr("transform", function(d) { 
                 return "translate(" + path.centroid(d) + ")"; 
               })
-              .attr("dy", "-1em")
-              // .text(function(d) { 
-              //   return findprop(d, scope.layerFeatureName); 
-              // })
-              // .attr("layer-feature-code", function(d) { 
-              //   return findprop(d, scope.layerFeatureCode);
-              // });
+              .attr("dy", "-1em");
 
             /***** event data *****/
             var endall = function(transition, callback) { 
@@ -601,8 +593,6 @@
                 .each(function() { ++n; }) 
                 .each("end", function() { if (!--n) callback.apply(this, arguments); }); 
             }
-
-            // var duration = 500;
 
             var showFeatureNames = function(newFeatureCodes) {
               var color = d3.scale.linear().domain([1, newFeatureCodes.length])
@@ -617,46 +607,71 @@
                   return findprop(d, scope.layerFeatureName);
                 })
                 .transition()
-                // .duration(duration)
                 .style("fill-opacity", 1)
                 .style("display", "block")
                 .style("fill", function(d,i) {
+                  d.showname = true;
                   var index = newFeatureCodes.indexOf(findprop(d, scope.layerFeatureCode));
                   return color(index);
                 });
             }
 
-            var hideFeatureNames = function(oldFeatureCodes, newFeatureCodes) {
-              gLabelLayer.selectAll("text")
+            var hideFeatureNames = function() {
+
+              var dfd = $q.defer();
+
+              var highlightData = gLabelLayer.selectAll("text")
                 .filter(function(d){
-                  return oldFeatureCodes.indexOf(findprop(d, scope.layerFeatureCode)) > -1;
-                })
-                .transition()
-                // .duration(duration)
-                .style("fill-opacity", 0)
-                .transition()
-                // .style("display", "none")
-                .text("")
-                .attr("style", "")
-                .call(endall, function() {
-                    if (newFeatureCodes) {
-                      showFeatureNames(newFeatureCodes);    
-                    }
+                  return d.hasOwnProperty("showname");
                 });
+
+              if (highlightData.size() == 0) {
+                dfd.resolve();
+              } else {
+                highlightData
+                  .transition()
+                  .style("fill-opacity", 0)
+                  .transition()
+                  .text(function(d){
+                    if (d.hasOwnProperty("showname")) {
+                      delete d.showname;
+                    }
+                    return "";
+                  })
+                  .attr("style", "")
+                  .call(endall, function() {
+                    dfd.resolve();
+                  });
+              }
+
+              return dfd.promise;
+
             }
 
-            var dehighlightFeatures = function(oldFeatureCodes, newFeatureCodes) {
-              gLayer.selectAll("path")
-                .filter(function(d){
-                  return oldFeatureCodes.indexOf(findprop(d, scope.layerFeatureCode)) > -1;
-                })
-                .transition()
-                .attr("fill", scope.bgColor)
-                .call(endall, function() {
-                    if (newFeatureCodes) {
-                      highlightFeatures(newFeatureCodes);    
-                    }
-                });
+            var dehighlightFeatures = function(oldFeatureCodes) {
+              
+              var dfd = $q.defer();
+
+              var highlightData = gLayer.selectAll("path")
+                    .filter(function(d){
+                      return d.hasOwnProperty("highlight");
+                    });
+
+              if (highlightData.size() == 0) {
+                dfd.resolve();
+              } else {
+                highlightData
+                  .transition()
+                  .attr("fill", function(d){
+                    delete d.highlight;
+                    return scope.bgColor;
+                  })
+                  .call(endall, function() {
+                    dfd.resolve();
+                  });                
+              }
+
+              return dfd.promise;
             }
 
             var highlightFeatures = function(newFeatureCodes) {
@@ -671,8 +686,8 @@
                   return newFeatureCodes.indexOf(findprop(d, scope.layerFeatureCode)) > -1;
                 })
                 .transition()
-                // .duration(duration)
                 .attr("fill", function(d,i) {
+                  d.highlight = true;
                   var index = newFeatureCodes.indexOf(findprop(d, scope.layerFeatureCode));
                   return color(index);
                 });
@@ -680,17 +695,19 @@
 
             // rx observeOnScope for data changes and re-render
             observeOnScope(scope, 'data').subscribe(function(change) {
-              if (!change.oldValue) {
-                if (change.newValue) {
-                  showFeatureNames(change.newValue);
-                  highlightFeatures(change.newValue);
-                }
-              } else {
-                if (change.newValue) {
-                  hideFeatureNames(change.oldValue, change.newValue);
-                  dehighlightFeatures(change.oldValue, change.newValue);
-                }
-              }
+         
+              hideFeatureNames().then(function () {
+                  if (change.newValue) {
+                    showFeatureNames(change.newValue);
+                  }  
+                });
+
+              dehighlightFeatures().then(function () {
+                  if (change.newValue) {
+                    highlightFeatures(change.newValue);
+                  }  
+                });
+    
             }); 
             /***** event data *****/
 
@@ -698,7 +715,7 @@
         }
      };
   })
-  .directive('routeEventsMap', function($parse, $window, observeOnScope){
+  .directive('routeEventsMap', function($parse, $window, observeOnScope, $q){
      return{
         restrict:'EA',
         scope: {
@@ -765,20 +782,13 @@
             // Layer1 labels
             gLabelLayer.selectAll("text")
               .data(layerFeatues)
-              .enter().append("text")
+              .enter()
+              .append("text")
               .attr("class", "label")
-              .style("fill-opacity", 0)
-              .style("display", "none")
               .attr("transform", function(d) { 
                 return "translate(" + path.centroid(d) + ")"; 
               })
-              .attr("dy", "-1em")
-              .text(function(d) { 
-                return findprop(d, scope.layerFeatureName); 
-              })
-              .attr("layer-feature-code", function(d) { 
-                return findprop(d, scope.layerFeatureCode);
-              });
+              .attr("dy", "-1em");
 
             /***** event data *****/
             var endall = function(transition, callback) { 
@@ -787,8 +797,6 @@
                 .each(function() { ++n; }) 
                 .each("end", function() { if (!--n) callback.apply(this, arguments); }); 
             }
-
-            var duration = 50;
 
             var showFeatureNames = function(newFeatureCodes) {
               var color = d3.scale.linear().domain([1, newFeatureCodes.length])
@@ -800,49 +808,74 @@
                   return newFeatureCodes.indexOf(findprop(d, scope.layerFeatureCode)) > -1;
                 })
                 .text(function(d){
-                  // return (newFeatureCodes.indexOf(findprop(d, scope.layerFeatureCode)) + 1) + ":" + findprop(d, scope.layerFeatureName);
                   return findprop(d, scope.layerFeatureName);
                 })
                 .transition()
-                .duration(duration)
                 .style("fill-opacity", 1)
                 .style("display", "block")
                 .style("fill", function(d,i) {
+                  d.showname = true;
                   var index = newFeatureCodes.indexOf(findprop(d, scope.layerFeatureCode));
                   return color(index);
                 });
             }
 
-            var hideFeatureNames = function(oldFeatureCodes, newFeatureCodes) {
-              gLabelLayer.selectAll("text")
+            var hideFeatureNames = function() {
+
+              var dfd = $q.defer();
+
+              var highlightData = gLabelLayer.selectAll("text")
                 .filter(function(d){
-                  return oldFeatureCodes.indexOf(findprop(d, scope.layerFeatureCode)) > -1;
-                })
-                .transition()
-                // .duration(duration)
-                .style("fill-opacity", 0)
-                .transition()
-                .style("display", "none")
-                .call(endall, function() {
-                    if (newFeatureCodes) {
-                      showFeatureNames(newFeatureCodes);    
-                    }
+                  return d.hasOwnProperty("showname");
                 });
+
+              if (highlightData.size() == 0) {
+                dfd.resolve();
+              } else {
+                highlightData
+                  .transition()
+                  .style("fill-opacity", 0)
+                  .transition()
+                  .text(function(d){
+                    if (d.hasOwnProperty("showname")) {
+                      delete d.showname;
+                    }
+                    return "";
+                  })
+                  .attr("style", "")
+                  .call(endall, function() {
+                    dfd.resolve();
+                  });
+              }
+
+              return dfd.promise;
+
             }
 
-            var dehighlightFeatures = function(oldFeatureCodes, newFeatureCodes) {
-              gLayer.selectAll("path")
-                .filter(function(d){
-                  return oldFeatureCodes.indexOf(findprop(d, scope.layerFeatureCode)) > -1;
-                })
-                .transition()
-                // .duration(duration)
-                .attr("fill", scope.bgColor)
-                .call(endall, function() {
-                    if (newFeatureCodes) {
-                      highlightFeatures(newFeatureCodes);    
-                    }
-                });
+            var dehighlightFeatures = function(oldFeatureCodes) {
+              
+              var dfd = $q.defer();
+
+              var highlightData = gLayer.selectAll("path")
+                    .filter(function(d){
+                      return d.hasOwnProperty("highlight");
+                    });
+
+              if (highlightData.size() == 0) {
+                dfd.resolve();
+              } else {
+                highlightData
+                  .transition()
+                  .attr("fill", function(d){
+                    delete d.highlight;
+                    return scope.bgColor;
+                  })
+                  .call(endall, function() {
+                    dfd.resolve();
+                  });                
+              }
+
+              return dfd.promise;
             }
 
             var highlightFeatures = function(newFeatureCodes) {
@@ -851,13 +884,14 @@
                             .interpolate(d3.interpolateHcl)
                             .range(scope.colorRange.split(","));
 
+
               gLayer.selectAll("path")
                 .filter(function(d){
                   return newFeatureCodes.indexOf(findprop(d, scope.layerFeatureCode)) > -1;
                 })
                 .transition()
-                .duration(duration)
                 .attr("fill", function(d,i) {
+                  d.highlight = true;
                   var index = newFeatureCodes.indexOf(findprop(d, scope.layerFeatureCode));
                   return color(index);
                 });
@@ -865,51 +899,63 @@
 
             var extractCodes = function(routes, key) {
               var featureCodes = [];
-              routes.forEach(function(entry) {
-                  featureCodes.push(entry[key]);
-              });
+              if (routes) {
+                
+                routes.forEach(function(entry) {
+                    featureCodes.push(entry[key]);
+                });
 
-              return featureCodes;
+                return featureCodes;
+              }
+              else {
+                return featureCodes;
+              }
             }
 
             // rx observeOnScope for data changes and re-render
             observeOnScope(scope, 'data').subscribe(function(change) {
-              if (!change.oldValue) {
-                if (change.newValue) {
-                  var newFromFeatureCodes = extractCodes(change.newValue, "from");
-                  var newToFeatureCodes = extractCodes(change.newValue, "to");
+         
+              var newFromFeatureCodes = extractCodes(change.newValue, "from");
+              var newToFeatureCodes = extractCodes(change.newValue, "to");
+
+              hideFeatureNames().then(function () {
                   showFeatureNames(newFromFeatureCodes);
                   showFeatureNames(newToFeatureCodes);
+                });
+
+              dehighlightFeatures().then(function () {
                   highlightFeatures(newFromFeatureCodes);
                   highlightFeatures(newToFeatureCodes);
-                }
-              } else {
-                if (change.newValue) {
-                  var newFromFeatureCodes = extractCodes(change.newValue, "from");
-                  var newToFeatureCodes = extractCodes(change.newValue, "to");
-                  var oldFromFeatureCodes = extractCodes(change.oldValue, "from");
-                  var oldToFeatureCodes = extractCodes(change.oldValue, "to");
-
-                  hideFeatureNames(oldFromFeatureCodes, newFromFeatureCodes);
-                  hideFeatureNames(oldToFeatureCodes, newToFeatureCodes);
-                  dehighlightFeatures(oldFromFeatureCodes, newFromFeatureCodes);
-                  dehighlightFeatures(oldToFeatureCodes, newToFeatureCodes);
-                }
-              }
-              
-
-              // if (!change.oldValue) {
-              //   if (change.newValue) {
-              //     showFeatureNames(change.newValue);
-              //     highlightFeatures(change.newValue);
-              //   }
-              // } else {
-              //   if (change.newValue) {
-              //     hideFeatureNames(change.oldValue, change.newValue);
-              //     dehighlightFeatures(change.oldValue, change.newValue);
-              //   }
-              // }
+                });
+    
             }); 
+
+            // rx observeOnScope for data changes and re-render
+            // observeOnScope(scope, 'data').subscribe(function(change) {
+            //   if (!change.oldValue) {
+            //     if (change.newValue) {
+            //       var newFromFeatureCodes = extractCodes(change.newValue, "from");
+            //       var newToFeatureCodes = extractCodes(change.newValue, "to");
+            //       showFeatureNames(newFromFeatureCodes);
+            //       showFeatureNames(newToFeatureCodes);
+            //       highlightFeatures(newFromFeatureCodes);
+            //       highlightFeatures(newToFeatureCodes);
+            //     }
+            //   } else {
+            //     if (change.newValue) {
+            //       var newFromFeatureCodes = extractCodes(change.newValue, "from");
+            //       var newToFeatureCodes = extractCodes(change.newValue, "to");
+            //       var oldFromFeatureCodes = extractCodes(change.oldValue, "from");
+            //       var oldToFeatureCodes = extractCodes(change.oldValue, "to");
+
+            //       hideFeatureNames(oldFromFeatureCodes, newFromFeatureCodes);
+            //       hideFeatureNames(oldToFeatureCodes, newToFeatureCodes);
+            //       dehighlightFeatures(oldFromFeatureCodes, newFromFeatureCodes);
+            //       dehighlightFeatures(oldToFeatureCodes, newToFeatureCodes);
+            //     }
+            //   }
+              
+            // }); 
             /***** event data *****/
 
           });
