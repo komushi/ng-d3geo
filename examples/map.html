@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>日本地図を描画する</title>
+  <style type="text/css">
+@import url(//fonts.googleapis.com/earlyaccess/notosansjapanese.css);
+
+svg {
+  font-size: 11px;
+  font-family: 'Noto Sans Japanese', 'Klee', 'Meiryo';
+  font-weight: 300;
+}
+
+.background {
+  fill: none;
+  pointer-events: all;
+}
+
+.circle {
+  fill: silver;
+  r: 2;
+}
+
+.layer1 {
+  cursor: pointer;
+}
+
+.layer1.active {
+  display:none;
+}
+
+.layer1-boundary {
+  fill: none;
+  stroke: white;
+  stroke-dasharray: 2,2;
+  stroke-linejoin: round;
+  stroke-width: 1;
+}
+
+.label {
+  fill: white;
+  fill-opacity: 1;
+  font-size: 18px;
+  font-family: 'Noto Sans Japanese', 'Klee', 'Meiryo';
+  font-weight: 700;
+  text-anchor: middle;
+  text-shadow:
+    2px 2px 0 #000,
+    -1px -1px 0 #000,  
+    1px -1px 0 #000,
+    -1px 1px 0 #000,
+     1px 1px 0 #000;
+  cursor: pointer;
+}
+
+.layer2 {
+  cursor: pointer;
+  fill: orange;
+  stroke: white;
+  stroke-width: 0.2;
+}
+
+.layer1:hover, .layer2:hover {
+  fill: red;
+}
+
+  </style>
+  <script src="http://d3js.org/d3.v3.min.js"></script>
+  <script src="http://d3js.org/topojson.v1.min.js"></script>
+</head>
+<body>
+
+<script>
+
+  function findprop(obj, path) {
+      // if(path == "id"){
+      //   console.log(obj);
+      // }
+
+      var args = path.split('.'), i, l;
+
+      for (i=0, l=args.length; i<l; i++) {
+          if (!obj.hasOwnProperty(args[i]))
+              return;
+          obj = obj[args[i]];
+      }
+
+      return obj;
+  }
+
+  var width = 1000,
+      height = 1000;
+
+  var layerFeatureCode = "properties.district_code",
+      layerFeatureName = "properties.district";
+
+  
+  var svg = d3.select("body").append("svg")
+    .attr("width", width)
+    .attr("height", height)
+    .attr("style", "outline: thin solid gray;");
+
+  var g = svg.append('g');
+  var gLayer = g.append('g')
+  var gLabel = g.append('g');
+
+  var projection = d3.geo.mercator()
+    .center([139.752268, 35.677043])
+    .scale(150000)
+    .translate([width / 2, height / 2]);
+
+  var path = d3.geo.path().projection(projection);
+
+  d3.json("data/tokyo_23_blocks_districts_final.json", function (error, json) {
+
+    var layerFeatues = topojson.feature(json, json.objects['districts']).features;
+    var mesh = topojson.mesh(json, json.objects['districts'], function(a, b) { return a !== b; });
+
+    var color = d3.scale.linear().domain([1,layerFeatues.length])
+                  .interpolate(d3.interpolateHcl)
+                  .range(['#227AFF','#FFF500']);
+                  
+
+    // polygons
+    gLayer.selectAll("path")
+      .data(layerFeatues)
+      .enter().append("path")
+      .attr("class", "layer1")
+      .attr("d", path)
+      .attr("fill", function(d,i) { 
+        return color(i);
+      })
+      .attr("layer-feature-code", function(d) {
+        return findprop(d, layerFeatureCode);
+      })
+      .attr("layer-feature-name", function(d) {
+        return findprop(d, layerFeatureName);
+      });
+
+    // border
+    gLayer.append("path")
+      .datum(mesh)
+      .attr("d", path)
+      .attr("class", "layer1-boundary");
+
+    // Layer1 labels
+    gLabel.selectAll("text")
+      .data(layerFeatues)
+      .enter().append("text")
+      .attr("class", "label")
+      .attr("transform", function(d) { 
+        return "translate(" + path.centroid(d) + ")"; 
+      })
+      .attr("dy", ".35em")
+      .text(function(d) { 
+        return findprop(d, layerFeatureName); 
+      })
+      .attr("layer-feature-code", function(d) { 
+        return findprop(d, layerFeatureCode);
+      });
+
+  });
+
+</script>
+</body>
+</html>

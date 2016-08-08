@@ -1,6 +1,6 @@
 {
   "name": "ng-d3geo",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "angular directive for d3.js geo",
   "main": "main/ng-d3geo.js",
   "dependencies": {

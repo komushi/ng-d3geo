@@ -1004,6 +1004,168 @@
                 .each("end", function() { if (!--n) callback.apply(this, arguments); }); 
             }
 
+            var showFeatureNames = function(newValue) {
+              var color = d3.scale.linear().domain([1, newValue.length])
+                            .interpolate(d3.interpolateHcl)
+                            .range(scope.colorRange.split(","));
+
+              var fromFeatureCodes = extractCodes(newValue, "from");
+              var toFeatureCodes = extractCodes(newValue, "to");
+
+
+              gLabelLayer.selectAll("text")
+                .filter(function(d){
+                  return (fromFeatureCodes.indexOf(findprop(d, scope.layerFeatureCode)) > -1)
+                    || (toFeatureCodes.indexOf(findprop(d, scope.layerFeatureCode)) > -1);
+                })
+                .text(function(d){
+                  var fromIndex = fromFeatureCodes.indexOf(findprop(d, scope.layerFeatureCode));
+                  var toIndex = toFeatureCodes.indexOf(findprop(d, scope.layerFeatureCode));
+                  if (fromIndex > -1) {
+                    return "From_" + (fromIndex + 1) + "_" + findprop(d, scope.layerFeatureName);
+                  }
+                  else if (toIndex > -1) {
+                    return "To_" + (toIndex + 1) + "_" + findprop(d, scope.layerFeatureName);
+                  }
+                })
+                .transition()
+                .style("fill-opacity", 1)
+                .style("display", "block")
+                .style("fill", function(d,i) {
+                  d.showname = true;
+
+                  var fromIndex = fromFeatureCodes.indexOf(findprop(d, scope.layerFeatureCode));
+                  var toIndex = toFeatureCodes.indexOf(findprop(d, scope.layerFeatureCode));
+                  if (fromIndex > -1) {
+                    return color(fromIndex);
+                  }
+                  else if (toIndex > -1) {
+                    return color(toIndex);
+                  }
+                });
+            }
+
+            var hideFeatureNames = function() {
+
+              var dfd = $q.defer();
+
+              var highlightData = gLabelLayer.selectAll("text")
+                .filter(function(d){
+                  return d.hasOwnProperty("showname");
+                });
+
+              if (highlightData.size() == 0) {
+                dfd.resolve();
+              } else {
+                highlightData
+                  .transition()
+                  .style("fill-opacity", 0)
+                  .transition()
+                  .text(function(d){
+                    if (d.hasOwnProperty("showname")) {
+                      delete d.showname;
+                    }
+                    return "";
+                  })
+                  .attr("style", null)
+                  .call(endall, function() {
+                    dfd.resolve();
+                  });
+              }
+
+              return dfd.promise;
+
+            }
+
+            var dehighlightFeatures = function(oldFeatureCodes) {
+              
+              var dfd = $q.defer();
+
+              var highlightData = gLayer.selectAll("path")
+                    .filter(function(d){
+                      return d.hasOwnProperty("highlight");
+                    });
+
+              if (highlightData.size() == 0) {
+                dfd.resolve();
+              } else {
+                highlightData
+                  .transition()
+                  .attr("fill", function(d){
+                    delete d.highlight;
+                    return scope.bgColor;
+                  })
+                  .call(endall, function() {
+                    dfd.resolve();
+                  });                
+              }
+
+              return dfd.promise;
+            }
+
+            var highlightFeatures = function(newFeatureCodes) {
+
+              var color = d3.scale.linear().domain([1, newFeatureCodes.length])
+                            .interpolate(d3.interpolateHcl)
+                            .range(scope.colorRange.split(","));
+
+
+              gLayer.selectAll("path")
+                .filter(function(d){
+                  return newFeatureCodes.indexOf(findprop(d, scope.layerFeatureCode)) > -1;
+                })
+                .transition()
+                .attr("fill", function(d,i) {
+                  d.highlight = true;
+                  var index = newFeatureCodes.indexOf(findprop(d, scope.layerFeatureCode));
+                  return color(index);
+                });
+            }
+
+            var extractCodes = function(routes, key) {
+              var featureCodes = [];
+              if (routes) {
+                
+                routes.forEach(function(entry) {
+                    featureCodes.push(entry[key]);
+                });
+
+                return featureCodes;
+              }
+              else {
+                return featureCodes;
+              }
+            }
+
+            // rx observeOnScope for data changes and re-render
+            observeOnScope(scope, 'data').subscribe(function(change) {
+
+              var newFromFeatureCodes = extractCodes(change.newValue, "from");
+              var newToFeatureCodes = extractCodes(change.newValue, "to");
+
+              hideFeatureNames().then(function () {
+                  if (change.newValue) {
+                    showFeatureNames(change.newValue);  
+                  }
+                });
+
+              dehighlightFeatures().then(function () {
+                  highlightFeatures(newFromFeatureCodes);
+                  highlightFeatures(newToFeatureCodes);
+                });
+    
+            }); 
+            /***** event data *****/
+
+            /***** event data *****/
+            /*
+            var endall = function(transition, callback) { 
+              var n = 0; 
+              transition 
+                .each(function() { ++n; }) 
+                .each("end", function() { if (!--n) callback.apply(this, arguments); }); 
+            }
+
             var showFeatureNames = function(newFeatureCodes) {
               var color = d3.scale.linear().domain([1, newFeatureCodes.length])
                             .interpolate(d3.interpolateHcl)
@@ -1135,6 +1297,7 @@
                 });
     
             }); 
+            */
             /***** event data *****/
 
           });
