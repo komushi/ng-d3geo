@@ -169,9 +169,9 @@ app.controller("2layerMapCtrl", ['$scope', '$http', '$interval', function($scope
     var routes = [];
 
     for (i = 0; i < 10; i++) {
-      var from = Math.floor(Math.random() * (max - min + 1)) + min;
-      var to = Math.floor(Math.random() * (max - min + 1)) + min;
-      routes.push({from: featureCodes.slice(from, from + 1)[0], to: featureCodes.slice(to, to + 1)[0]});
+      var from_code = Math.floor(Math.random() * (max - min + 1)) + min;
+      var to_code = Math.floor(Math.random() * (max - min + 1)) + min;
+      routes.push({from_code: featureCodes.slice(from_code, from_code + 1)[0], to_code: featureCodes.slice(to_code, to_code + 1)[0]});
     }
 
 

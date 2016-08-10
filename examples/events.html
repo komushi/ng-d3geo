@@ -1,0 +1,75 @@
+
+
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>ngd3geo app</title>
+
+    <script type="text/javascript" src="lib/angular/angular.min.js"></script>
+    <script type="text/javascript" src="lib/d3/d3.min.js"></script>
+    <script type="text/javascript" src="lib/topojson/topojson.min.js"></script>
+    <script type="text/javascript" src="lib/rxjs/rx.all.min.js"></script>
+    <script type="text/javascript" src="lib/rx-angular/rx.angular.min.js"></script>
+    <script type="text/javascript" src="lib/ng-d3geo/ng-d3geo.js"></script>
+    <link rel="stylesheet" href="lib/ng-d3geo/css/ng-d3geo.css" /> 
+
+</head>
+
+
+<body ng-app="d3geoApp">
+
+<script>
+var app = angular.module("d3geoApp", ['ngD3geo']); 
+app.controller("routeEventsMapCtrl", ['$scope', '$http', '$interval', function($scope, $http, $interval) {
+  
+
+  var jsons = [];
+
+  $http.get('data/event_data1.json')
+       .success(function(res){
+          jsons.push(res.toptenlist);
+        });
+
+  $http.get('data/event_data2.json')
+       .success(function(res){
+          jsons.push(res.toptenlist);
+        });
+
+  $interval(function(){
+    var idx = Math.floor(Math.random() * 2);
+    $scope.matrixJson = jsons[idx];
+  }, 2000);
+
+}]);
+</script>
+
+<div ng-controller="routeEventsMapCtrl">
+
+  <br/>
+  <br/>
+  <div>
+    <h2>Route Events Tokyo</h2>
+    <div route-events-map
+      id="02"
+      data="matrixJson"
+      topojson-path="data/tokyo_23_blocks_districts_final.json"
+      width="1000"
+      height="1000"
+      bg-color="#bbdefb"
+      color-range="#227AFF,#FFF500"
+      center="139.752268, 35.677043"
+      scale="150000"
+      layer-objects="blocks"
+      layer-feature-name="properties.block"
+      layer-feature-code="properties.block_code"
+      >
+    </div>
+  </div>
+
+
+</div>
+
+
+</body>
+</html>

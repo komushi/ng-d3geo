@@ -1009,8 +1009,8 @@
                             .interpolate(d3.interpolateHcl)
                             .range(scope.colorRange.split(","));
 
-              var fromFeatureCodes = extractCodes(newValue, "from");
-              var toFeatureCodes = extractCodes(newValue, "to");
+              var fromFeatureCodes = extractCodes(newValue, "from_code");
+              var toFeatureCodes = extractCodes(newValue, "to_code");
 
 
               gLabelLayer.selectAll("text")
@@ -1140,8 +1140,8 @@
             // rx observeOnScope for data changes and re-render
             observeOnScope(scope, 'data').subscribe(function(change) {
 
-              var newFromFeatureCodes = extractCodes(change.newValue, "from");
-              var newToFeatureCodes = extractCodes(change.newValue, "to");
+              var newFromFeatureCodes = extractCodes(change.newValue, "from_code");
+              var newToFeatureCodes = extractCodes(change.newValue, "to_code");
 
               hideFeatureNames().then(function () {
                   if (change.newValue) {
