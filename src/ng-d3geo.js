@@ -76,7 +76,7 @@
                 .attr("class", "layer1")
                 .attr("d", path)
                 .attr("fill", function(d,i) { 
-                  return color(i);
+                  return color(i + 1);
                 })
                 .attr("layer-feature-code", function(d) {
                   return findprop(d, scope.layerFeatureCode);
@@ -142,7 +142,7 @@
                 .attr("class", "layer1")
                 .attr("d", path)
                 .attr("fill", function(d,i) { 
-                  return color(i);
+                  return color(i + 1);
                 })
                 .attr("layer-feature-code", function(d) {
                   return findprop(d, scope.layerFeatureCode);
@@ -191,7 +191,7 @@
                 .attr("class", "layer1")
                 .attr("d", path)
                 .attr("fill", function(d,i) { 
-                  return color(i);
+                  return color(i + 1);
                 });
 
               // border
@@ -316,7 +316,7 @@
               .attr("class", "layer1")
               .attr("d", path)
               .attr("fill", function(d,i) { 
-                return color(i);
+                return color(i + 1);
               })
               .attr("layer1-feature-code", function(d) {
                 return findprop(d, scope.layer1FeatureCode);
@@ -612,7 +612,7 @@
                 .style("fill", function(d,i) {
                   d.showname = true;
                   var index = newFeatureCodes.indexOf(findprop(d, scope.layerFeatureCode));
-                  return color(index);
+                  return color(index + 1);
                 });
             }
 
@@ -689,7 +689,7 @@
                 .attr("fill", function(d,i) {
                   d.highlight = true;
                   var index = newFeatureCodes.indexOf(findprop(d, scope.layerFeatureCode));
-                  return color(index);
+                  return color(index + 1);
                 });
             }
 
@@ -800,7 +800,7 @@
                 .attr("class", "layer1")
                 .attr("d", path)
                 .attr("fill", function(d,i) { 
-                  return color(i);
+                  return color(i + 1);
                 })
                 .attr("layer-feature-code", function(d) {
                   return findprop(d, scope.layerFeatureCode);
@@ -845,7 +845,7 @@
                 .attr("class", "layer1")
                 .attr("d", path)
                 .attr("fill", function(d,i) { 
-                  return color(i);
+                  return color(i + 1);
                 })
                 .attr("layer-feature-code", function(d) {
                   return findprop(d, scope.layerFeatureCode);
@@ -883,7 +883,7 @@
                 .attr("class", "layer1")
                 .attr("d", path)
                 .attr("fill", function(d,i) { 
-                  return color(i);
+                  return color(i + 1);
                 });
 
               // border
@@ -1037,10 +1037,10 @@
                   var fromIndex = fromFeatureCodes.indexOf(findprop(d, scope.layerFeatureCode));
                   var toIndex = toFeatureCodes.indexOf(findprop(d, scope.layerFeatureCode));
                   if (fromIndex > -1) {
-                    return color(fromIndex);
+                    return color(fromIndex + 1);
                   }
                   else if (toIndex > -1) {
-                    return color(toIndex);
+                    return color(toIndex + 1);
                   }
                 });
             }
@@ -1066,10 +1066,10 @@
                   var fromIndex = fromFeatureCodes.indexOf(findprop(d, scope.layerFeatureCode));
                   var toIndex = toFeatureCodes.indexOf(findprop(d, scope.layerFeatureCode));
                   if (fromIndex > -1) {
-                    return color(fromIndex);
+                    return color(fromIndex + 1);
                   }
                   else if (toIndex > -1) {
-                    return color(toIndex);
+                    return color(toIndex + 1);
                   }
                 });
             }
