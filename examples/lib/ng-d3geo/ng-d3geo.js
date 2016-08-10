@@ -1045,6 +1045,54 @@
                 });
             }
 
+            var highlightFeatures = function(newFeatureCodes) {
+
+              var color = d3.scale.linear().domain([1, newFeatureCodes.length])
+                            .interpolate(d3.interpolateHcl)
+                            .range(scope.colorRange.split(","));
+
+              var fromFeatureCodes = extractCodes(newValue, "from_code");
+              var toFeatureCodes = extractCodes(newValue, "to_code");
+
+              gLayer.selectAll("path")
+                .filter(function(d){
+                  return (fromFeatureCodes.indexOf(findprop(d, scope.layerFeatureCode)) > -1)
+                    || (toFeatureCodes.indexOf(findprop(d, scope.layerFeatureCode)) > -1);
+                })
+                .transition()
+                .attr("fill", function(d,i) {
+                  d.highlight = true;
+
+                  var fromIndex = fromFeatureCodes.indexOf(findprop(d, scope.layerFeatureCode));
+                  var toIndex = toFeatureCodes.indexOf(findprop(d, scope.layerFeatureCode));
+                  if (fromIndex > -1) {
+                    return color(fromIndex);
+                  }
+                  else if (toIndex > -1) {
+                    return color(toIndex);
+                  }
+                });
+            }
+
+            // var highlightFeatures = function(newFeatureCodes) {
+
+            //   var color = d3.scale.linear().domain([1, newFeatureCodes.length])
+            //                 .interpolate(d3.interpolateHcl)
+            //                 .range(scope.colorRange.split(","));
+
+
+            //   gLayer.selectAll("path")
+            //     .filter(function(d){
+            //       return newFeatureCodes.indexOf(findprop(d, scope.layerFeatureCode)) > -1;
+            //     })
+            //     .transition()
+            //     .attr("fill", function(d,i) {
+            //       d.highlight = true;
+            //       var index = newFeatureCodes.indexOf(findprop(d, scope.layerFeatureCode));
+            //       return color(index);
+            //     });
+            // }
+
             var hideFeatureNames = function() {
 
               var dfd = $q.defer();
@@ -1103,25 +1151,6 @@
               return dfd.promise;
             }
 
-            var highlightFeatures = function(newFeatureCodes) {
-
-              var color = d3.scale.linear().domain([1, newFeatureCodes.length])
-                            .interpolate(d3.interpolateHcl)
-                            .range(scope.colorRange.split(","));
-
-
-              gLayer.selectAll("path")
-                .filter(function(d){
-                  return newFeatureCodes.indexOf(findprop(d, scope.layerFeatureCode)) > -1;
-                })
-                .transition()
-                .attr("fill", function(d,i) {
-                  d.highlight = true;
-                  var index = newFeatureCodes.indexOf(findprop(d, scope.layerFeatureCode));
-                  return color(index);
-                });
-            }
-
             var extractCodes = function(routes, key) {
               var featureCodes = [];
               if (routes) {
@@ -1139,10 +1168,6 @@
 
             // rx observeOnScope for data changes and re-render
             observeOnScope(scope, 'data').subscribe(function(change) {
-
-              var newFromFeatureCodes = extractCodes(change.newValue, "from_code");
-              var newToFeatureCodes = extractCodes(change.newValue, "to_code");
-
               hideFeatureNames().then(function () {
                   if (change.newValue) {
                     showFeatureNames(change.newValue);  
@@ -1150,8 +1175,9 @@
                 });
 
               dehighlightFeatures().then(function () {
-                  highlightFeatures(newFromFeatureCodes);
-                  highlightFeatures(newToFeatureCodes);
+                  if (change.newValue) {
+                    highlightFeatures(change.newValue);  
+                  }
                 });
     
             }); 
