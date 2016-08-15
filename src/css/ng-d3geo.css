@@ -12,12 +12,12 @@ svg {
 }
 
 .circle {
-  fill: silver;
-  r: 2;
+  /*fill: red;*/
+  /*r: 2;*/
 }
 
 .layer1 {
-  cursor: pointer;
+  /*cursor: pointer;*/
 }
 
 .layer1.active {
@@ -49,12 +49,12 @@ svg {
 }
 
 .layer2 {
-  cursor: pointer;
+  /*cursor: pointer;*/
   fill: orange;
   stroke: white;
   stroke-width: 0.2;
 }
 
-.layer1:hover, .layer2:hover {
+/*.layer1:hover, .layer2:hover {
   fill: red;
-}
+}*/
