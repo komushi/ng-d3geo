@@ -155,67 +155,6 @@ var coordinates =
   };
 
 
-/*
-  var featureCodes =
-  ['1010360', '1010110', '1020070', '1020190', '1190350', '1150210', '1190100', '1190130', '1190050', '1170160', '1030120', '1110250', '1110210', '1130180', '1130150', '1040850', '1040640', '1040630', '1040540', '1040380', '1040430', '1040290', '1040040', '1120050', '1010080', '1010180', '1010410', '1060030', '1060090', '1060320', '1090010', '1090090', '1090130', '1090210', '1070020', '1070080', '1070190', '1110010', '1110150', '1050180'];
-
-
-  var i = 0;
-  $interval(function(){
-    var min = 0;
-    var max = featureCodes.length - 1;
-
-    var routes = [];
-
-    for (i = 0; i < 10; i++) {
-      var from_code = Math.floor(Math.random() * (max - min + 1)) + min;
-      var to_code = Math.floor(Math.random() * (max - min + 1)) + min;
-      routes.push({from_code: featureCodes.slice(from_code, from_code + 1)[0], to_code: featureCodes.slice(to_code, to_code + 1)[0]});
-    }
-
-
-
-
-
-    // i++;
-    
-    // if (i % 2 == 0) {
-    //   routes.push({from: '1010360', to: '1190130'});
-    //   routes.push({from: '1010360', to: '1110150'});
-    //   routes.push({from: '1130180', to: '1170160'});
-    //   routes.push({from: '1090010', to: '1170160'});
-    // } else {
-    //   routes.push({from: '1040850', to: '1060320'});
-    //   routes.push({from: '1040850', to: '1150210'});
-    //   routes.push({from: '1030120', to: '1110010'});
-    //   routes.push({from: '1040040', to: '1110010'});
-    // }
-
-    $scope.routes = routes;
-
-  }, 3000);
-  
-*/
-
-  // $interval(function(){
-  //   var min = 0;
-  //   var max = featureCodes.length - 1;
-
-  //   var codes = [];
-
-  //   while(codes.length < 10) {
-  //     var from = Math.floor(Math.random() * (max - min + 1)) + min;
-  //     var code = featureCodes.slice(from, from + 1)[0];
-  //     if (codes.indexOf(code) == -1) {
-  //       codes.push(code);        
-  //     }
-  //   }
-
-  //   $scope.featureCodes = codes;
-
-  // }, 1500);
-
-
 }]);
 </script>
 
@@ -229,7 +168,7 @@ var coordinates =
       topojson-path="data/tokyo_23_blocks_districts_final.json"
       width="800"
       height="800"
-      layer1-color-range="#0d47a1,#e3f2fd"
+      layer1-color-range="#227AFF,#FFF500"
       center="139.752268, 35.677043"
       scale="110000"
       layer1-objects="districts"
@@ -243,111 +182,6 @@ var coordinates =
       >
     </div>
   </div>
-
-<!--   <br/>
-  <br/>
-  <div>
-    <h2>Route Events Tokyo</h2>
-    <div route-events-map
-      id="02"
-      data="routes"
-      topojson-path="data/tokyo_23_blocks_districts_final.json"
-      width="1000"
-      height="1000"
-      bg-color="#bbdefb"
-      color-range="#227AFF,#FFF500"
-      center="139.752268, 35.677043"
-      scale="150000"
-      layer-objects="blocks"
-      layer-feature-name="properties.block"
-      layer-feature-code="properties.block_code"
-      >
-    </div>
-  </div> -->
-
-<!--   <br/>
-  <br/>
-  <div>
-    <h2>Receiving Events Tokyo</h2>
-    <div events-map
-      id="02"
-      data="featureCodes"
-      topojson-path="data/tokyo_23_blocks_districts_final.json"
-      width="1000"
-      height="1000"
-      bg-color="#bbdefb"
-      color-range="#227AFF,#FFF500"
-      center="139.752268, 35.677043"
-      scale="150000"
-      layer-objects="blocks"
-      layer-feature-name="properties.block"
-      layer-feature-code="properties.block_code"
-      >
-    </div>
-  </div> -->
-
-<!--   <br/>
-  <br/>
-  <div style="width:1500px; height:800px;">
-    <h2>Static Map Tokyo</h2>
-    <div static-map
-      id="03"
-      topojson-path="data/tokyo_23_blocks_districts_final.json"
-      width="1000"
-      height="1000"
-      color-range="#0d47a1,#e3f2fd"
-      center="139.752268, 35.677043"
-      scale="110000"
-      layer-objects="districts"
-      layer-feature-name="properties.district"
-      layer-feature-code="properties.district_code"
-      feature-name-style="hover"
-      >
-    </div>
-  </div> -->
-
-<!--   <br/>
-  <br/>
-  <div style="width:1500px; height:800px;">
-    <h2>Zoom & Map Tokyo</h2>
-    <div zoom-pan-map
-      id="04"
-      topojson-path="data/tokyo_23_blocks_districts_final.json"
-      width="1000"
-      height="1000"
-      color-range="#0d47a1,#e3f2fd"
-      center="139.752268, 35.677043"
-      scale="110000"
-      layer-objects="districts"
-      layer-feature-name="properties.district"
-      layer-feature-code="properties.district_code"
-      feature-name-style="hover"
-      >
-    </div>
-  </div>
- -->
-
-<!--   <br/>
-  <br/>
-  <div style="width:1500px; height:800px;">
-    <h2>2-Layer Map US</h2>
-    <div 2layer-map
-      id="04"
-      topojson-path="data/us_counties_states_final.json"
-      width="1200"
-      height="600"
-      layer1-color-range="#0d47a1,#e3f2fd"
-      center="-99.736816, 38.818207"
-      scale="1000"
-      layer1-objects="us_states"
-      layer2-objects="us_counties"
-      layer1-feature-name="properties.state_code"
-      layer1-feature-code="properties.state_code"
-      layer2-feature-name="properties.county"
-      layer2-feature-code="properties.county_code"
-      >
-    </div>
-  </div> -->
 
 </div>
 

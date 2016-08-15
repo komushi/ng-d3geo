@@ -82,7 +82,8 @@
               .attr("cy", "50%")
               .attr("r", "100%")
               .attr("id", function(d) { 
-                return "hgrad" + d.id; 
+                // return "hgrad" + d.id;
+                return "hgrad" + findprop(d, scope.layerFeatureCode);
               });
             
             hgrads.append("stop")
@@ -109,7 +110,8 @@
               .attr("cy", "50%")
               .attr("r", "35%")
               .attr("id", function(d) { 
-                return "grad" + d.id; 
+                // return "grad" + d.id;
+                return "grad" + findprop(d, scope.layerFeatureCode);
               });
 
             grads.append("stop")
@@ -131,7 +133,8 @@
 
                 d3.select(this)
                   .style("fill", function(d) {
-                      return "url(#hgrad" + d.id + ")";
+                      // return "url(#hgrad" + d.id + ")";
+                      return "url(#hgrad" + findprop(d, scope.layerFeatureCode) + ")";
                   });
 
               }
@@ -140,7 +143,8 @@
 
                 d3.select(this)
                   .style("fill", function(d) { 
-                    return "url(#grad" + d.id + ")";
+                    // return "url(#grad" + d.id + ")";
+                    return "url(#grad" + findprop(d, scope.layerFeatureCode) + ")";
                   });
               }
 
@@ -154,7 +158,8 @@
                 //   return color(i + 1);
                 // })
                 .attr("fill", function(d) {
-                    return "url(#grad" + d.id + ")";
+                    // return "url(#grad" + d.id + ")";
+                    return "url(#grad" + findprop(d, scope.layerFeatureCode) + ")";
                 })
                 .attr("layer-feature-code", function(d) {
                   return findprop(d, scope.layerFeatureCode);
@@ -205,7 +210,8 @@
 
                 d3.select(this)
                   .style("fill", function(d) {
-                      return "url(#hgrad" + d.id + ")";
+                      // return "url(#hgrad" + d.id + ")";
+                      return "url(#hgrad" + findprop(d, scope.layerFeatureCode) + ")";
                   });
 
               }
@@ -223,7 +229,8 @@
 
                 d3.select(this)
                   .style("fill", function(d) { 
-                    return "url(#grad" + d.id + ")";
+                    // return "url(#grad" + d.id + ")";
+                    return "url(#grad" + findprop(d, scope.layerFeatureCode) + ")";
                   });
               }
 
@@ -238,7 +245,8 @@
                 //   return d.color;
                 // })
                 .style("fill", function(d, i) {
-                    return "url(#grad" + d.id + ")";
+                    // return "url(#grad" + d.id + ")";
+                    return "url(#grad" + findprop(d, scope.layerFeatureCode) + ")";
                 })
                 .attr("layer-feature-code", function(d) {
                   return findprop(d, scope.layerFeatureCode);
@@ -284,7 +292,8 @@
 
                 d3.select(this)
                   .style("fill", function(d) {
-                      return "url(#hgrad" + d.id + ")";
+                      // return "url(#hgrad" + d.id + ")";
+                      return "url(#hgrad" + findprop(d, scope.layerFeatureCode) + ")";
                   });
 
               }
@@ -293,7 +302,8 @@
 
                 d3.select(this)
                   .style("fill", function(d) { 
-                    return "url(#grad" + d.id + ")";
+                    // return "url(#grad" + d.id + ")";
+                    return "url(#grad" + findprop(d, scope.layerFeatureCode) + ")";
                   });
               }
 
@@ -395,7 +405,8 @@
               .attr("cy", "50%")
               .attr("r", "100%")
               .attr("id", function(d) { 
-                return "hgrad" + d.id; 
+                // return "hgrad" + d.id; 
+                return "hgrad" + findprop(d, scope.layer1FeatureCode);
               });
             
             hgrads.append("stop")
@@ -422,7 +433,8 @@
               .attr("cy", "50%")
               .attr("r", "35%")
               .attr("id", function(d) { 
-                return "grad" + d.id; 
+                // return "grad" + d.id; 
+                return "grad" + findprop(d, scope.layer1FeatureCode);
               });
 
             grads.append("stop")
@@ -442,14 +454,16 @@
             var mouseoverLayer1 = function(p) {
               d3.select(this)
                 .style("fill", function(d) {
-                    return "url(#hgrad" + d.id + ")";
+                    // return "url(#hgrad" + d.id + ")";
+                    return "url(#hgrad" + findprop(d, scope.layer1FeatureCode) + ")";
                 });
             }
             
             var mouseoutLayer1 = function (p) {
               d3.select(this)
                 .style("fill", function(d) { 
-                  return "url(#grad" + d.id + ")";
+                  // return "url(#grad" + d.id + ")";
+                  return "url(#grad" + findprop(d, scope.layer1FeatureCode) + ")";
                 });
             }
 
@@ -461,6 +475,8 @@
               .style("fill", function(d, i) {
                   return "url(#grad" + findprop(d, scope.layer1FeatureCode) + ")";
               })
+              .style("fill-opacity", 0)
+              .style("display", "none")
               .attr("layer1-feature-code", function(d) {
                 return findprop(d, scope.layer1FeatureCode);
               })
@@ -507,7 +523,7 @@
               //   return color(i + 1);
               // })
               .style("fill", function(d, i) {
-                  return "url(#grad" + d.id + ")";
+                  return "url(#grad" + findprop(d, scope.layer1FeatureCode) + ")";
               })
               .attr("layer1-feature-code", function(d) {
                 return findprop(d, scope.layer1FeatureCode);
@@ -608,10 +624,16 @@
             // hide layer1 labels
             gLabelLayer1.selectAll('text')
               .transition()
-              .duration(250)
               .style("fill-opacity", 0)
               .transition()
               .style("display", "none");
+
+
+            gLayer2.selectAll("path")
+              .transition()
+              .style("fill-opacity", 1)
+              .style("display", "block");
+
 
             // callback to notify the specified feature is ready to receive location events
             var featureCode = findprop(d, scope.layer1FeatureCode);
@@ -636,6 +658,11 @@
               .duration(250)
               .style("fill-opacity", 1);
 
+            gLayer2.selectAll("path")
+              .transition()
+              .style("fill-opacity", 0)
+              .style("display", "none");
+
             scope.onStopEvents();
           };
           /***** click to zoom *****/
@@ -647,7 +674,6 @@
                 return findprop(p, scope.layer2FeatureCode) == findprop(d, scope.layer2FeatureCode);
               })
               .transition()
-              .duration(200)
               .style("fill-opacity", 1)
               .style("display", "block");
 
@@ -665,7 +691,6 @@
                 return findprop(p, scope.layer2FeatureCode) == findprop(d, scope.layer2FeatureCode);
               })
               .transition()
-              .duration(200)
               .style("fill-opacity", 0)
               .transition()
               .style("display", "none");
@@ -697,19 +722,26 @@
                 return "circleGrad" + d.id; 
               });
 
+            // circleGrads.append("stop")
+            //     .attr("offset", "0%")
+            //     .style("stop-color",  function(d, i) { 
+            //       return "red"; 
+            //     })
+            //     .style("stop-opacity", "0");
+
             circleGrads.append("stop")
                 .attr("offset", "0%")
                 .style("stop-color",  function(d, i) { 
-                  return "red"; 
+                  return "white"; 
                 })
-                .style("stop-opacity", "0");
+                .style("stop-opacity", "1");
 
             circleGrads.append("stop")
                 .attr("offset", "100%")
                 .style("stop-color",  function(d, i) { 
-                  return "red";
+                  return "blue";
                 })
-                .style("stop-opacity", ".4");
+                .style("stop-opacity", ".6");
 
           var visualizeEvents = function(data) {
             styleCircle
@@ -1014,7 +1046,6 @@
                     return findprop(p, scope.layerFeatureCode) == findprop(d, scope.layerFeatureCode);
                   })
                   .transition()
-                  .duration(200)
                   .style("fill-opacity", 1)
                   .style("display", "block");
               }
@@ -1026,7 +1057,6 @@
                     return findprop(p, scope.layerFeatureCode) == findprop(d, scope.layerFeatureCode);
                   })
                   .transition()
-                  .duration(200)
                   .style("fill-opacity", 0)
                   .transition()
                   .style("display", "none");
@@ -1251,6 +1281,61 @@
               var fromFeatureCodes = extractCodes(newValue, "from_code");
               var toFeatureCodes = extractCodes(newValue, "to_code");
 
+              var fromGrads = g.append("defs").attr("id", "from_def")
+                .selectAll("linearGradient")
+                .data(fromFeatureCodes)
+                .enter()
+                .append("linearGradient")
+                .attr("gradientUnits", "linearGradient")
+                .attr("x1", "0%")
+                .attr("y1", "0%")
+                .attr("x2", "100%")
+                .attr("y2", "0%")
+                .attr("id", function(d, i) { 
+                  return "fromGrad" + (i + 1);
+                });
+
+              fromGrads.append("stop")
+                  .attr("offset", "0%")
+                  .style("stop-color", "white")
+                  .style("stop-opacity", "1");
+
+              fromGrads.append("stop")
+                  .attr("offset", "100%")
+                  .style("stop-color",  function(d, i) { 
+                    return color(i + 1); 
+                  })
+                  .style("stop-opacity", "1");
+
+/*
+              // fill color gradient process
+              var toGrads = g.append("defs").attr("id", "to_def")
+                .selectAll("linearGradient")
+                .data(layerFeatues)
+                .enter()
+                .append("linearGradient")
+                .attr("gradientUnits", "linearGradient")
+                .attr("x1", "100%")
+                .attr("y1", "0%")
+                .attr("x2", "0%")
+                .attr("y2", "0%")
+                .attr("id", function(d) { 
+                  return "toGrad" + findprop(d, scope.layerFeatureCode);
+                });
+              
+              toGrads.append("stop")
+                  .attr("offset", "0%")
+                  .style("stop-color", "white")
+                  .style("stop-opacity", "1");
+
+
+              toGrads.append("stop")
+                  .attr("offset", "100%")
+                  .style("stop-color",  function(d, i) { 
+                    return color(i + 1); 
+                  })
+                  .style("stop-opacity", "1");
+*/
 
               gLabelLayer.selectAll("text")
                 .filter(function(d){
