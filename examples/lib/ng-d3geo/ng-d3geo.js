@@ -51,6 +51,8 @@
             .attr("style", "outline: thin solid gray;");
 
           var g = svg.append('g');
+          var gLayer = g.append("g").attr("id", scope.layerObjects);
+          var gLabelLayer = g.append("g").attr("id", scope.layerObjects + "_label");
 
           var projection = d3.geo.mercator()
             .center(scope.center.split(","))
@@ -67,82 +69,92 @@
             var color = d3.scale.linear().domain([1,layerFeatues.length])
                           .interpolate(d3.interpolateHcl)
                           .range(scope.colorRange.split(","));
-                          
+
+            // fill color gradient process
+            var hgrads = g.append("defs").attr("id", scope.layerObjects + "_hdef").selectAll("radialGradient")
+              .data(layerFeatues)
+              .enter()
+              .append("radialGradient")
+              .attr("gradientUnits", "objectBoundingBox")
+              .attr("fx", "50%")
+              .attr("fy", "50%")
+              .attr("cx", "50%")
+              .attr("cy", "50%")
+              .attr("r", "100%")
+              .attr("id", function(d) { 
+                return "hgrad" + d.id; 
+              });
+            
+            hgrads.append("stop")
+                .attr("offset", "0%")
+                .style("stop-color", "white")
+                .style("stop-opacity", "1");
+
+
+            hgrads.append("stop")
+                .attr("offset", "100%")
+                .style("stop-color",  function(d, i) { 
+                  return color(i + 1); 
+                })
+                .style("stop-opacity", "1");
+
+            var grads = g.append("defs").attr("id", scope.layerObjects + "_def").selectAll("radialGradient")
+              .data(layerFeatues)
+              .enter()
+              .append("radialGradient")
+              .attr("gradientUnits", "objectBoundingBox")
+              .attr("fx", "50%")
+              .attr("fy", "50%")
+              .attr("cx", "50%")
+              .attr("cy", "50%")
+              .attr("r", "35%")
+              .attr("id", function(d) { 
+                return "grad" + d.id; 
+              });
+
+            grads.append("stop")
+                .attr("offset", "0%")
+                .style("stop-color",  function(d, i) { 
+                  return color(i + 1); 
+                })
+                .style("stop-opacity", ".8");
+
+            grads.append("stop")
+                .attr("offset", "100%")
+                .style("stop-color",  function(d, i) { 
+                  return color(i + 1); 
+                })
+                .style("stop-opacity", "1");
+
             if (scope.featureNameStyle == 'static') {
-              // polygons
-              g.selectAll("path")
-                .data(layerFeatues)
-                .enter().append("path")
-                .attr("class", "layer1")
-                .attr("d", path)
-                .attr("fill", function(d,i) { 
-                  return color(i + 1);
-                })
-                .attr("layer-feature-code", function(d) {
-                  return findprop(d, scope.layerFeatureCode);
-                })
-                .attr("layer-feature-name", function(d) {
-                  return findprop(d, scope.layerFeatureName);
-                });
-
-              // border
-              g.append("path")
-                .datum(mesh)
-                .attr("d", path)
-                .attr("class", "layer1-boundary");
-
-              // Layer1 labels
-              g.selectAll("text")
-                .data(layerFeatues)
-                .enter().append("text")
-                .attr("class", "label")
-                .attr("transform", function(d) { 
-                  return "translate(" + path.centroid(d) + ")"; 
-                })
-                .attr("dy", ".35em")
-                .text(function(d) { 
-                  return findprop(d, scope.layerFeatureName); 
-                })
-                .attr("layer-feature-code", function(d) { 
-                  return findprop(d, scope.layerFeatureCode);
-                });
-            } else if (scope.featureNameStyle == 'hover') {
-
               var mouseover = function(p) {
-                // console.log(this.tagName);
 
+                d3.select(this)
+                  .style("fill", function(d) {
+                      return "url(#hgrad" + d.id + ")";
+                  });
 
-                g.selectAll("text")
-                  .filter(function(d){
-                    return findprop(p, scope.layerFeatureCode) == findprop(d, scope.layerFeatureCode);
-                  })
-                  .transition()
-                  .duration(200)
-                  .style("fill-opacity", 1)
-                  .style("display", "block");
               }
               
               var mouseout = function (p) {
 
-                g.selectAll("text")
-                  .filter(function(d){
-                    return findprop(p, scope.layerFeatureCode) == findprop(d, scope.layerFeatureCode);
-                  })
-                  .transition()
-                  .duration(200)
-                  .style("fill-opacity", 0)
-                  .transition()
-                  .style("display", "none");
+                d3.select(this)
+                  .style("fill", function(d) { 
+                    return "url(#grad" + d.id + ")";
+                  });
               }
 
               // polygons
-              g.selectAll("path")
+              gLayer.selectAll("path")
                 .data(layerFeatues)
                 .enter().append("path")
                 .attr("class", "layer1")
                 .attr("d", path)
-                .attr("fill", function(d,i) { 
-                  return color(i + 1);
+                // .attr("fill", function(d,i) { 
+                //   return color(i + 1);
+                // })
+                .attr("fill", function(d) {
+                    return "url(#grad" + d.id + ")";
                 })
                 .attr("layer-feature-code", function(d) {
                   return findprop(d, scope.layerFeatureCode);
@@ -154,16 +166,101 @@
                 .on("mouseout", mouseout);
 
               // border
-              g.append("path")
+              gLayer.append("path")
                 .datum(mesh)
                 .attr("d", path)
                 .attr("class", "layer1-boundary");
 
               // Layer1 labels
-              g.selectAll("text")
+              gLabelLayer.selectAll("text")
                 .data(layerFeatues)
                 .enter().append("text")
                 .attr("class", "label")
+                .attr("pointer-events", "none")
+                .attr("transform", function(d) { 
+                  return "translate(" + path.centroid(d) + ")"; 
+                })
+                .attr("dy", ".35em")
+                .text(function(d) { 
+                  return findprop(d, scope.layerFeatureName); 
+                })
+                .attr("layer-feature-code", function(d) { 
+                  return findprop(d, scope.layerFeatureCode);
+                });
+
+            } 
+            else if (scope.featureNameStyle == 'hover') {
+
+              var mouseover = function(p) {
+                // console.log(this.tagName);
+
+
+                gLabelLayer.selectAll("text")
+                  .filter(function(d){
+                    return findprop(p, scope.layerFeatureCode) == findprop(d, scope.layerFeatureCode);
+                  })
+                  .transition()
+                  .style("fill-opacity", 1)
+                  .style("display", "block");
+
+                d3.select(this)
+                  .style("fill", function(d) {
+                      return "url(#hgrad" + d.id + ")";
+                  });
+
+              }
+              
+              var mouseout = function (p) {
+
+                gLabelLayer.selectAll("text")
+                  .filter(function(d){
+                    return findprop(p, scope.layerFeatureCode) == findprop(d, scope.layerFeatureCode);
+                  })
+                  .transition()
+                  .style("fill-opacity", 0)
+                  .transition()
+                  .style("display", "none");
+
+                d3.select(this)
+                  .style("fill", function(d) { 
+                    return "url(#grad" + d.id + ")";
+                  });
+              }
+
+              // polygons
+              gLayer.selectAll("path")
+                .data(layerFeatues)
+                .enter().append("path")
+                .attr("class", "layer1")
+                .attr("d", path)
+                // .style("fill", function(d,i) { 
+                //   d.color = color(i + 1);
+                //   return d.color;
+                // })
+                .style("fill", function(d, i) {
+                    return "url(#grad" + d.id + ")";
+                })
+                .attr("layer-feature-code", function(d) {
+                  return findprop(d, scope.layerFeatureCode);
+                })
+                .attr("layer-feature-name", function(d) {
+                  return findprop(d, scope.layerFeatureName);
+                })
+                .on("mouseover", mouseover)
+                .on("mouseout", mouseout);
+
+              // border
+              gLayer.append("path")
+                .datum(mesh)
+                .attr("d", path)
+                .attr("class", "layer1-boundary");
+
+              // Layer1 labels
+              gLabelLayer.selectAll("text")
+                .data(layerFeatues)
+                .enter().append("text")
+                .attr("class", "label")
+                .attr("pointer-events", "none")
                 .style("fill-opacity", 0)
                 .style("display", "none")
                 .attr("transform", function(d) { 
@@ -172,6 +269,7 @@
                 })
                 // .attr("dy", ".35em")
                 .attr("dy", "-1em")
+                // .attr("dy", "-0.35em")
                 .attr("pointer-events", "none")
                 .text(function(d) { 
                   return findprop(d, scope.layerFeatureName); 
@@ -179,23 +277,40 @@
                 .attr("layer-feature-code", function(d) { 
                   return findprop(d, scope.layerFeatureCode);
                 });
-            } else {
-              var color = d3.scale.linear().domain([1,layerFeatues.length])
-                            .interpolate(d3.interpolateHcl)
-                            .range(scope.colorRange.split(","));
+            } 
+            else {
+
+              var mouseover = function(p) {
+
+                d3.select(this)
+                  .style("fill", function(d) {
+                      return "url(#hgrad" + d.id + ")";
+                  });
+
+              }
+              
+              var mouseout = function (p) {
+
+                d3.select(this)
+                  .style("fill", function(d) { 
+                    return "url(#grad" + d.id + ")";
+                  });
+              }
 
               // polygons
-              g.selectAll("path")
+              gLayer.selectAll("path")
                 .data(layerFeatues)
                 .enter().append("path")
                 .attr("class", "layer1")
                 .attr("d", path)
                 .attr("fill", function(d,i) { 
                   return color(i + 1);
-                });
+                })
+                .on("mouseover", mouseover)
+                .on("mouseout", mouseout);
 
               // border
-              g.append("path")
+              gLayer.append("path")
                 .datum(mesh)
                 .attr("d", path)
                 .attr("class", "layer1-boundary");
@@ -268,11 +383,84 @@
                           .interpolate(d3.interpolateHcl)
                           .range(scope.layer1ColorRange.split(","));
 
+            // fill color gradient process
+            var hgrads = g.append("defs").attr("id", scope.layer1Objects + "_hdef").selectAll("radialGradient")
+              .data(layer1Featues)
+              .enter()
+              .append("radialGradient")
+              .attr("gradientUnits", "objectBoundingBox")
+              .attr("fx", "50%")
+              .attr("fy", "50%")
+              .attr("cx", "50%")
+              .attr("cy", "50%")
+              .attr("r", "100%")
+              .attr("id", function(d) { 
+                return "hgrad" + d.id; 
+              });
+            
+            hgrads.append("stop")
+                .attr("offset", "0%")
+                .style("stop-color", "white")
+                .style("stop-opacity", "1");
+
+
+            hgrads.append("stop")
+                .attr("offset", "100%")
+                .style("stop-color",  function(d, i) { 
+                  return color(i + 1); 
+                })
+                .style("stop-opacity", "1");
+
+            var grads = g.append("defs").attr("id", scope.layer1Objects + "_def").selectAll("radialGradient")
+              .data(layer1Featues)
+              .enter()
+              .append("radialGradient")
+              .attr("gradientUnits", "objectBoundingBox")
+              .attr("fx", "50%")
+              .attr("fy", "50%")
+              .attr("cx", "50%")
+              .attr("cy", "50%")
+              .attr("r", "35%")
+              .attr("id", function(d) { 
+                return "grad" + d.id; 
+              });
+
+            grads.append("stop")
+                .attr("offset", "0%")
+                .style("stop-color",  function(d, i) { 
+                  return color(i + 1); 
+                })
+                .style("stop-opacity", ".8");
+
+            grads.append("stop")
+                .attr("offset", "100%")
+                .style("stop-color",  function(d, i) { 
+                  return color(i + 1); 
+                })
+                .style("stop-opacity", "1");
+
+            var mouseoverLayer1 = function(p) {
+              d3.select(this)
+                .style("fill", function(d) {
+                    return "url(#hgrad" + d.id + ")";
+                });
+            }
+            
+            var mouseoutLayer1 = function (p) {
+              d3.select(this)
+                .style("fill", function(d) { 
+                  return "url(#grad" + d.id + ")";
+                });
+            }
+
             // layer2 polygons and boundary
             gLayer2.selectAll("path")
               .data(layer2Featues)
               .enter().append("path")
               .attr("d", path)
+              .style("fill", function(d, i) {
+                  return "url(#grad" + findprop(d, scope.layer1FeatureCode) + ")";
+              })
               .attr("layer1-feature-code", function(d) {
                 return findprop(d, scope.layer1FeatureCode);
               })
@@ -300,7 +488,7 @@
               .attr("transform", function(d) { 
                 return "translate(" + path.centroid(d) + ")"; 
               })
-              .attr("dy", "-1em")
+              .attr("dy", ".35em")
               .attr("pointer-events", "none")
               .text(function(d) { 
                 return findprop(d, scope.layer2FeatureName); 
@@ -315,8 +503,11 @@
               .enter().append("path")
               .attr("class", "layer1")
               .attr("d", path)
-              .attr("fill", function(d,i) { 
-                return color(i + 1);
+              // .attr("fill", function(d,i) { 
+              //   return color(i + 1);
+              // })
+              .style("fill", function(d, i) {
+                  return "url(#grad" + d.id + ")";
               })
               .attr("layer1-feature-code", function(d) {
                 return findprop(d, scope.layer1FeatureCode);
@@ -324,7 +515,9 @@
               .attr("layer1-feature-name", function(d) {
                 return findprop(d, scope.layer1FeatureName);
               })
-              .on("click", layer1Clicked);
+              .on("click", layer1Clicked)
+              .on("mouseover", mouseoverLayer1)
+              .on("mouseout", mouseoutLayer1);
 
             // Layer1 border
             gLayer1.append("path")
@@ -341,6 +534,7 @@
                 return "translate(" + path.centroid(d) + ")"; 
               })
               .attr("dy", ".35em")
+              .attr("pointer-events", "none")
               .text(function(d) { 
                 return findprop(d, scope.layer1FeatureName); 
               })
@@ -456,6 +650,13 @@
               .duration(200)
               .style("fill-opacity", 1)
               .style("display", "block");
+
+
+
+            d3.select(this)
+              .style("fill", function(d) {
+                  return "url(#hgrad" + findprop(d, scope.layer1FeatureCode) + ")";
+              });
           }
           
           var mouseoutLayer2 = function (p) {
@@ -468,13 +669,47 @@
               .style("fill-opacity", 0)
               .transition()
               .style("display", "none");
+
+            d3.select(this)
+              .style("fill", function(d) {
+                  return "url(#grad" + findprop(d, scope.layer1FeatureCode) + ")";
+              });
           }
           /***** hover *****/
 
           /***** event data *****/
-          var duration = 1500;
+          // var duration = 1500;
 
           var styleCircle = g.selectAll('circle');
+
+            var circleGrads = g.append("defs").attr("id", "circle_def")
+              .selectAll("radialGradient")
+              .data([{id: 1}])
+              .enter()
+              .append("radialGradient")
+              .attr("gradientUnits", "objectBoundingBox")
+              .attr("fx", "50%")
+              .attr("fy", "50%")
+              .attr("cx", "50%")
+              .attr("cy", "50%")
+              .attr("r", "35%")
+              .attr("id", function(d) { 
+                return "circleGrad" + d.id; 
+              });
+
+            circleGrads.append("stop")
+                .attr("offset", "0%")
+                .style("stop-color",  function(d, i) { 
+                  return "red"; 
+                })
+                .style("stop-opacity", "0");
+
+            circleGrads.append("stop")
+                .attr("offset", "100%")
+                .style("stop-color",  function(d, i) { 
+                  return "red";
+                })
+                .style("stop-opacity", ".4");
 
           var visualizeEvents = function(data) {
             styleCircle
@@ -482,20 +717,24 @@
                 .enter().append('circle')
                 .style('opacity', 0)
                 .attr("class", "circle")
+                .style("fill", function(d, i) {
+                  return "url(#circleGrad1)";
+                  // return "url(#circleGrad" + d.id + ")";
+                })
                 .attr('cx', function(d) { 
                   return projection(d)[0];
                 })
                 .attr('cy', function(d) { 
                   return projection(d)[1];
                 })
-                .attr('r', 1)
+                .attr('r', 2)
               .transition()
                 .delay(function(d,i) { return i * 100; })
-                .duration(duration)
+                // .duration(duration)
                 .style('opacity', 1)
               .transition()
-                .delay(function(d,i) { return i * 100 + duration + 100; })
-                .duration(duration)
+                .delay(function(d,i) { return i * 100 + 250 + 100; })
+                // .duration(duration)
                 .style('opacity', 0)
                 .remove();
           }

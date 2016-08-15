@@ -19,11 +19,10 @@
 
 <script>
 var app = angular.module("d3geoApp", ['ngD3geo']); 
-app.controller("2layerMapCtrl", ['$scope', '$http', '$interval', function($scope, $http, $interval) {
+app.controller("mapCtrl", ['$scope', '$http', '$interval', function($scope, $http, $interval) {
   
 
-/*
-  var coordinates =
+var coordinates =
   [[139.734291,35.688634],
   [139.760496,35.690335],
   [139.770401,35.694069],
@@ -145,7 +144,7 @@ app.controller("2layerMapCtrl", ['$scope', '$http', '$interval', function($scope
             dot = coordinates.slice(to, from);
           }
           $scope.circleData = dot;
-        }, 5000);  
+        }, 1000);  
     }
   };
 
@@ -154,9 +153,9 @@ app.controller("2layerMapCtrl", ['$scope', '$http', '$interval', function($scope
     $interval.cancel(timer);
     timer = null;
   };
-*/
 
 
+/*
   var featureCodes =
   ['1010360', '1010110', '1020070', '1020190', '1190350', '1150210', '1190100', '1190130', '1190050', '1170160', '1030120', '1110250', '1110210', '1130180', '1130150', '1040850', '1040640', '1040630', '1040540', '1040380', '1040430', '1040290', '1040040', '1120050', '1010080', '1010180', '1010410', '1060030', '1060090', '1060320', '1090010', '1090090', '1090130', '1090210', '1070020', '1070080', '1070190', '1110010', '1110150', '1050180'];
 
@@ -196,7 +195,7 @@ app.controller("2layerMapCtrl", ['$scope', '$http', '$interval', function($scope
 
   }, 3000);
   
-
+*/
 
   // $interval(function(){
   //   var min = 0;
@@ -220,9 +219,9 @@ app.controller("2layerMapCtrl", ['$scope', '$http', '$interval', function($scope
 }]);
 </script>
 
-<div ng-controller="2layerMapCtrl">
+<div ng-controller="mapCtrl">
 
-<!--   <div>
+  <div>
     <h2>2-Layer Map Tokyo</h2>
     <div 2layer-map
       id="01"
@@ -230,7 +229,7 @@ app.controller("2layerMapCtrl", ['$scope', '$http', '$interval', function($scope
       topojson-path="data/tokyo_23_blocks_districts_final.json"
       width="800"
       height="800"
-      layer1-color-range="#0d47a1,#e3f2fd"
+      layer1-color-range="#227AFF,#FFF500"
       center="139.752268, 35.677043"
       scale="110000"
       layer1-objects="districts"
@@ -243,9 +242,9 @@ app.controller("2layerMapCtrl", ['$scope', '$http', '$interval', function($scope
       on-stop-events="unsubEvents()"
       >
     </div>
-  </div> -->
+  </div>
 
-  <br/>
+<!--   <br/>
   <br/>
   <div>
     <h2>Route Events Tokyo</h2>
@@ -264,7 +263,7 @@ app.controller("2layerMapCtrl", ['$scope', '$http', '$interval', function($scope
       layer-feature-code="properties.block_code"
       >
     </div>
-  </div>
+  </div> -->
 
 <!--   <br/>
   <br/>
@@ -299,10 +298,10 @@ app.controller("2layerMapCtrl", ['$scope', '$http', '$interval', function($scope
       color-range="#0d47a1,#e3f2fd"
       center="139.752268, 35.677043"
       scale="110000"
-      layer-objects="blocks"
-      layer-feature-name="properties.block"
-      layer-feature-code="properties.block_code"
-      feature-name-style="hover"
+      layer-objects="districts"
+      layer-feature-name="properties.district"
+      layer-feature-code="properties.district_code"
+      feature-name-style="static"
       >
     </div>
   </div> -->
