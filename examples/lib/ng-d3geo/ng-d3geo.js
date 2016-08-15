@@ -1201,6 +1201,7 @@
           height: '@',
           bgColor: '@',
           colorRange: '@',
+          topNumber: '@',
           center: '@',
           scale: '@',
           layerObjects: '@',
@@ -1231,6 +1232,65 @@
             .translate([width / 2, height / 2]);
 
           var path = d3.geo.path().projection(projection);
+
+          var color = d3.scale.linear().domain([1, parseInt(scope.topNumber)])
+                        .interpolate(d3.interpolateHcl)
+                        .range(scope.colorRange.split(","));
+
+          var fromGrads = g.append("defs").attr("id", "from_def")
+            .selectAll("linearGradient")
+            .data(d3.range(1, parseInt(scope.topNumber) + 1))
+            .enter()
+            .append("linearGradient")
+            .attr("gradientUnits", "linearGradient")
+            .attr("x1", "100%")
+            .attr("y1", "0%")
+            .attr("x2", "0%")
+            .attr("y2", "0%")
+            .attr("id", function(d, i) { 
+              return "fromGrad" + (i + 1);
+            });
+
+          fromGrads.append("stop")
+              .attr("offset", "0%")
+              .style("stop-color", "white")
+              .style("stop-opacity", "1");
+
+          fromGrads.append("stop")
+              .attr("offset", "100%")
+              .style("stop-color",  function(d, i) { 
+                return color(i + 1); 
+              })
+              .style("stop-opacity", "1");
+
+          // fill color gradient process
+          var toGrads = g.append("defs").attr("id", "to_def")
+            .selectAll("linearGradient")
+            .data(d3.range(1, parseInt(scope.topNumber) + 1))
+            .enter()
+            .append("linearGradient")
+            .attr("gradientUnits", "linearGradient")
+            .attr("x1", "0%")
+            .attr("y1", "0%")
+            .attr("x2", "100%")
+            .attr("y2", "0%")
+            .attr("id", function(d, i) { 
+              return "toGrad" + (i + 1);
+            });
+          
+          toGrads.append("stop")
+              .attr("offset", "0%")
+              .style("stop-color", "white")
+              .style("stop-opacity", "1");
+
+
+          toGrads.append("stop")
+              .attr("offset", "100%")
+              .style("stop-color",  function(d, i) { 
+                return color(i + 1); 
+              })
+              .style("stop-opacity", "1");
+
 
           d3.json(scope.topojsonPath, function (error, json) {
 
@@ -1274,68 +1334,12 @@
             }
 
             var showFeatureNames = function(newValue) {
-              var color = d3.scale.linear().domain([1, newValue.length])
-                            .interpolate(d3.interpolateHcl)
-                            .range(scope.colorRange.split(","));
+              // var color = d3.scale.linear().domain([1, newValue.length])
+              //               .interpolate(d3.interpolateHcl)
+              //               .range(scope.colorRange.split(","));
 
               var fromFeatureCodes = extractCodes(newValue, "from_code");
               var toFeatureCodes = extractCodes(newValue, "to_code");
-
-              var fromGrads = g.append("defs").attr("id", "from_def")
-                .selectAll("linearGradient")
-                .data(fromFeatureCodes)
-                .enter()
-                .append("linearGradient")
-                .attr("gradientUnits", "linearGradient")
-                .attr("x1", "0%")
-                .attr("y1", "0%")
-                .attr("x2", "100%")
-                .attr("y2", "0%")
-                .attr("id", function(d, i) { 
-                  return "fromGrad" + (i + 1);
-                });
-
-              fromGrads.append("stop")
-                  .attr("offset", "0%")
-                  .style("stop-color", "white")
-                  .style("stop-opacity", "1");
-
-              fromGrads.append("stop")
-                  .attr("offset", "100%")
-                  .style("stop-color",  function(d, i) { 
-                    return color(i + 1); 
-                  })
-                  .style("stop-opacity", "1");
-
-/*
-              // fill color gradient process
-              var toGrads = g.append("defs").attr("id", "to_def")
-                .selectAll("linearGradient")
-                .data(layerFeatues)
-                .enter()
-                .append("linearGradient")
-                .attr("gradientUnits", "linearGradient")
-                .attr("x1", "100%")
-                .attr("y1", "0%")
-                .attr("x2", "0%")
-                .attr("y2", "0%")
-                .attr("id", function(d) { 
-                  return "toGrad" + findprop(d, scope.layerFeatureCode);
-                });
-              
-              toGrads.append("stop")
-                  .attr("offset", "0%")
-                  .style("stop-color", "white")
-                  .style("stop-opacity", "1");
-
-
-              toGrads.append("stop")
-                  .attr("offset", "100%")
-                  .style("stop-color",  function(d, i) { 
-                    return color(i + 1); 
-                  })
-                  .style("stop-opacity", "1");
-*/
 
               gLabelLayer.selectAll("text")
                 .filter(function(d){
@@ -1346,10 +1350,12 @@
                   var fromIndex = fromFeatureCodes.indexOf(findprop(d, scope.layerFeatureCode));
                   var toIndex = toFeatureCodes.indexOf(findprop(d, scope.layerFeatureCode));
                   if (fromIndex > -1) {
-                    return "From_" + (fromIndex + 1) + "_" + findprop(d, scope.layerFeatureName);
+                    // return "From_" + (fromIndex + 1) + "_" + findprop(d, scope.layerFeatureName);
+                    return (fromIndex + 1) + "_" + findprop(d, scope.layerFeatureName);
                   }
                   else if (toIndex > -1) {
-                    return "To_" + (toIndex + 1) + "_" + findprop(d, scope.layerFeatureName);
+                    // return "To_" + (toIndex + 1) + "_" + findprop(d, scope.layerFeatureName);
+                    return (toIndex + 1) + "_" + findprop(d, scope.layerFeatureName);
                   }
                 })
                 .transition()
@@ -1361,19 +1367,20 @@
                   var fromIndex = fromFeatureCodes.indexOf(findprop(d, scope.layerFeatureCode));
                   var toIndex = toFeatureCodes.indexOf(findprop(d, scope.layerFeatureCode));
                   if (fromIndex > -1) {
-                    return color(fromIndex + 1);
+                    // return color(fromIndex + 1);
+                    return "url(#fromGrad" + (fromIndex + 1) + ")";
                   }
                   else if (toIndex > -1) {
-                    return color(toIndex + 1);
+                    return "url(#toGrad" + (toIndex + 1) + ")";
                   }
                 });
             }
 
             var highlightFeatures = function(newValue) {
 
-              var color = d3.scale.linear().domain([1, newValue.length])
-                            .interpolate(d3.interpolateHcl)
-                            .range(scope.colorRange.split(","));
+              // var color = d3.scale.linear().domain([1, newValue.length])
+              //               .interpolate(d3.interpolateHcl)
+              //               .range(scope.colorRange.split(","));
 
               var fromFeatureCodes = extractCodes(newValue, "from_code");
               var toFeatureCodes = extractCodes(newValue, "to_code");
@@ -1391,9 +1398,11 @@
                   var toIndex = toFeatureCodes.indexOf(findprop(d, scope.layerFeatureCode));
                   if (fromIndex > -1) {
                     return color(fromIndex + 1);
+                    // return "url(#fromGrad" + (fromIndex + 1) + ")";
                   }
                   else if (toIndex > -1) {
                     return color(toIndex + 1);
+                    // return "url(#toGrad" + (toIndex + 1) + ")";
                   }
                 });
             }
