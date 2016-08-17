@@ -332,8 +332,7 @@
   .directive('2layerMap', function($parse, $window, observeOnScope){
      return{
         restrict:'EA',
-        scope: {
-          data: '=',
+        scope: {          
           id: '@',
           topojsonPath: '@',
           width: '@',
@@ -347,6 +346,8 @@
           layer1FeatureCode: '@',
           layer2FeatureName: '@',
           layer2FeatureCode: '@',
+          layer1EventData: '=',
+          layer2EventData: '=',
           onReceiveEvents: '&',
           onStopEvents: '&'
         },
@@ -404,9 +405,12 @@
               .attr("cx", "50%")
               .attr("cy", "50%")
               .attr("r", "100%")
-              .attr("id", function(d) { 
-                // return "hgrad" + d.id; 
-                return "hgrad" + findprop(d, scope.layer1FeatureCode);
+              .attr("id", function(d, i) { 
+                
+                // return "hgrad" + findprop(d, scope.layer1FeatureCode);
+
+                d.rank = i + 1;
+                return "hgrad" + d.rank;
               });
             
             hgrads.append("stop")
@@ -433,8 +437,8 @@
               .attr("cy", "50%")
               .attr("r", "35%")
               .attr("id", function(d) { 
-                // return "grad" + d.id; 
-                return "grad" + findprop(d, scope.layer1FeatureCode);
+                // return "grad" + findprop(d, scope.layer1FeatureCode);
+                return "grad" + d.rank;
               });
 
             grads.append("stop")
@@ -442,7 +446,7 @@
                 .style("stop-color",  function(d, i) { 
                   return color(i + 1); 
                 })
-                .style("stop-opacity", ".8");
+                .style("stop-opacity", ".7");
 
             grads.append("stop")
                 .attr("offset", "100%")
@@ -454,16 +458,16 @@
             var mouseoverLayer1 = function(p) {
               d3.select(this)
                 .style("fill", function(d) {
-                    // return "url(#hgrad" + d.id + ")";
-                    return "url(#hgrad" + findprop(d, scope.layer1FeatureCode) + ")";
+                    // return "url(#hgrad" + findprop(d, scope.layer1FeatureCode) + ")";
+                    return "url(#hgrad" + d.rank + ")";
                 });
             }
             
             var mouseoutLayer1 = function (p) {
               d3.select(this)
                 .style("fill", function(d) { 
-                  // return "url(#grad" + d.id + ")";
-                  return "url(#grad" + findprop(d, scope.layer1FeatureCode) + ")";
+                  // return "url(#grad" + findprop(d, scope.layer1FeatureCode) + ")";
+                  return "url(#grad" + d.rank + ")";
                 });
             }
 
@@ -473,7 +477,8 @@
               .enter().append("path")
               .attr("d", path)
               .style("fill", function(d, i) {
-                  return "url(#grad" + findprop(d, scope.layer1FeatureCode) + ")";
+                  // return "url(#grad" + findprop(d, scope.layer1FeatureCode) + ")";
+                  return "#bbdefb";
               })
               .style("fill-opacity", 0)
               .style("display", "none")
@@ -523,7 +528,8 @@
               //   return color(i + 1);
               // })
               .style("fill", function(d, i) {
-                  return "url(#grad" + findprop(d, scope.layer1FeatureCode) + ")";
+                return "url(#grad" + d.rank + ")";
+                // return "url(#grad" + findprop(d, scope.layer1FeatureCode) + ")";
               })
               .attr("layer1-feature-code", function(d) {
                 return findprop(d, scope.layer1FeatureCode);
@@ -681,7 +687,8 @@
 
             d3.select(this)
               .style("fill", function(d) {
-                  return "url(#hgrad" + findprop(d, scope.layer1FeatureCode) + ")";
+                  // return "url(#hgrad" + findprop(d, scope.layer1FeatureCode) + ")";
+                  return "#bbdefb";
               });
           }
           
@@ -697,12 +704,13 @@
 
             d3.select(this)
               .style("fill", function(d) {
-                  return "url(#grad" + findprop(d, scope.layer1FeatureCode) + ")";
+                  // return "url(#grad" + findprop(d, scope.layer1FeatureCode) + ")";
+                  return "#bbdefb";
               });
           }
           /***** hover *****/
 
-          /***** event data *****/
+          /***** layer2 event data *****/
           // var duration = 1500;
 
           var styleCircle = g.selectAll('circle');
@@ -743,7 +751,7 @@
                 })
                 .style("stop-opacity", ".6");
 
-          var visualizeEvents = function(data) {
+          var visualizeLayer2Events = function(data) {
             styleCircle
                 .data(data)
                 .enter().append('circle')
@@ -772,13 +780,39 @@
           }
 
           // rx observeOnScope for data changes and re-render
-          observeOnScope(scope, 'data').subscribe(function(change) {
+          observeOnScope(scope, 'layer2EventData').subscribe(function(change) {
             if (change.newValue && change.oldValue) {
-              return visualizeEvents(change.newValue);
+              return visualizeLayer2Events(change.newValue);
             }
           }); 
-          /***** event data *****/
+          /***** layer2 event data *****/
 
+          /***** layer1 event data *****/
+          var visualizeLayer1Events = function(data) {
+            // console.log(JSON.stringify(data));
+
+            // Layer1 polygons
+            gLayer1.selectAll("path")
+              .filter(function(d){
+                return d.type === "Feature";
+              })
+              .style("fill", function(d, i) {
+
+                // console.log(data[findprop(d, scope.layer1FeatureCode)]);
+                // console.log(d);
+
+                var rank = data[findprop(d, scope.layer1FeatureCode)];
+                return "url(#grad" + rank + ")";
+              });
+          }
+
+          // rx observeOnScope for data changes and re-render
+          observeOnScope(scope, 'layer1EventData').subscribe(function(change) {
+            if (change.newValue && change.oldValue) {
+              return visualizeLayer1Events(change.newValue);
+            }
+          }); 
+          /***** layer1 event data *****/
         }
      };
   })

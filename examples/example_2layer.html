@@ -154,6 +154,34 @@ var coordinates =
     timer = null;
   };
 
+  var districtRank1 = [];
+  var rank = 1;
+  for (i = 101; i <= 123; i++){
+    // districtRank1.push({district_code:i});
+    districtRank1[i.toString()] = rank;
+    rank++;
+  }
+  
+  var districtRank2 = [];
+  rank = 1;
+  for (i = 123; i >= 101; i--){
+    // districtRank2.push({district_code:i});
+    districtRank2[i.toString()] = rank;
+    rank++;
+  }
+
+  var districtRanks = [];
+  districtRanks.push(districtRank1);
+  districtRanks.push(districtRank2);
+
+  $interval(function(){
+    var min = 0;
+    var max = 1;
+    
+    var index = Math.floor(Math.random() * (max - min + 1)) + min;
+    $scope.districtRank = districtRanks[index];
+  
+  }, 1500);  
 
 }]);
 </script>
@@ -164,7 +192,6 @@ var coordinates =
     <h2>2-Layer Map Tokyo</h2>
     <div 2layer-map
       id="01"
-      data="circleData"
       topojson-path="data/tokyo_23_blocks_districts_final.json"
       width="800"
       height="800"
@@ -177,6 +204,8 @@ var coordinates =
       layer1-feature-code="properties.district_code"
       layer2-feature-name="properties.block"
       layer2-feature-code="properties.block_code"
+      layer1-event-data="districtRank"
+      layer2-event-data="circleData"
       on-receive-events="subEventsFrom(feature)"
       on-stop-events="unsubEvents()"
       >
