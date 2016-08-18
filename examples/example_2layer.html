@@ -181,7 +181,7 @@ var coordinates =
     var index = Math.floor(Math.random() * (max - min + 1)) + min;
     $scope.districtRank = districtRanks[index];
   
-  }, 3500);  
+  }, 1500);  
 
 }]);
 </script>
@@ -190,7 +190,7 @@ var coordinates =
 
   <div>
     <h2>2-Layer Map Tokyo</h2>
-    <div 2layer-map
+    <div 2layer-events-map
       id="01"
       topojson-path="data/tokyo_23_blocks_districts_final.json"
       width="800"

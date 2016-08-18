@@ -18,6 +18,12 @@ svg {
 
 .layer1 {
   /*cursor: pointer;*/
+  fill: #cedefb;
+}
+
+
+.layer1:hover {
+  fill: orange;
 }
 
 .layer1.active {
@@ -30,6 +36,17 @@ svg {
   stroke-dasharray: 2,2;
   stroke-linejoin: round;
   stroke-width: 1;
+}
+
+.layer2 {
+  /*cursor: pointer;*/
+  stroke: white;
+  stroke-width: 0.2;
+  fill: #cedefb;
+}
+
+.layer2:hover {
+  fill: orange;
 }
 
 .label {
@@ -47,14 +64,3 @@ svg {
      1px 1px 0 #000;
   /*cursor: pointer;*/
 }
-
-.layer2 {
-  /*cursor: pointer;*/
-  fill: orange;
-  stroke: white;
-  stroke-width: 0.2;
-}
-
-/*.layer1:hover, .layer2:hover {
-  fill: red;
-}*/

@@ -20,7 +20,7 @@
 <script>
 var app = angular.module("d3geoApp", ['ngD3geo']); 
 app.controller("mapCtrl", ['$scope', '$http', '$interval', function($scope, $http, $interval) {
-  
+/*  
 
 var coordinates =
   [[139.734291,35.688634],
@@ -153,9 +153,9 @@ var coordinates =
     $interval.cancel(timer);
     timer = null;
   };
+*/
 
 
-/*
   var featureCodes =
   ['1010360', '1010110', '1020070', '1020190', '1190350', '1150210', '1190100', '1190130', '1190050', '1170160', '1030120', '1110250', '1110210', '1130180', '1130150', '1040850', '1040640', '1040630', '1040540', '1040380', '1040430', '1040290', '1040040', '1120050', '1010080', '1010180', '1010410', '1060030', '1060090', '1060320', '1090010', '1090090', '1090130', '1090210', '1070020', '1070080', '1070190', '1110010', '1110150', '1050180'];
 
@@ -195,25 +195,25 @@ var coordinates =
 
   }, 3000);
   
-*/
 
-  // $interval(function(){
-  //   var min = 0;
-  //   var max = featureCodes.length - 1;
 
-  //   var codes = [];
+  $interval(function(){
+    var min = 0;
+    var max = featureCodes.length - 1;
 
-  //   while(codes.length < 10) {
-  //     var from = Math.floor(Math.random() * (max - min + 1)) + min;
-  //     var code = featureCodes.slice(from, from + 1)[0];
-  //     if (codes.indexOf(code) == -1) {
-  //       codes.push(code);        
-  //     }
-  //   }
+    var codes = [];
 
-  //   $scope.featureCodes = codes;
+    while(codes.length < 10) {
+      var from = Math.floor(Math.random() * (max - min + 1)) + min;
+      var code = featureCodes.slice(from, from + 1)[0];
+      if (codes.indexOf(code) == -1) {
+        codes.push(code);        
+      }
+    }
 
-  // }, 1500);
+    $scope.featureCodes = codes;
+
+  }, 1500);
 
 
 }]);
@@ -221,7 +221,7 @@ var coordinates =
 
 <div ng-controller="mapCtrl">
 
-  <div>
+<!--   <div>
     <h2>2-Layer Map Tokyo</h2>
     <div 2layer-map
       id="01"
@@ -242,7 +242,7 @@ var coordinates =
       on-stop-events="unsubEvents()"
       >
     </div>
-  </div>
+  </div> -->
 
 <!--   <br/>
   <br/>
@@ -265,7 +265,7 @@ var coordinates =
     </div>
   </div> -->
 
-<!--   <br/>
+  <br/>
   <br/>
   <div>
     <h2>Receiving Events Tokyo</h2>
@@ -284,7 +284,7 @@ var coordinates =
       layer-feature-code="properties.block_code"
       >
     </div>
-  </div> -->
+  </div>
 
 <!--   <br/>
   <br/>
