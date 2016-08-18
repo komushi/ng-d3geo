@@ -39,7 +39,7 @@ app.controller("routeEventsMapCtrl", ['$scope', '$http', '$interval', function($
   $interval(function(){
     var idx = Math.floor(Math.random() * 2);
     $scope.matrixJson = jsons[idx];
-  }, 1500);
+  }, 1200);
 
 }]);
 </script>
@@ -52,7 +52,6 @@ app.controller("routeEventsMapCtrl", ['$scope', '$http', '$interval', function($
     <h2>Route Events Tokyo</h2>
     <div route-events-map
       id="02"
-      data="matrixJson"
       topojson-path="data/tokyo_23_blocks_districts_final.json"
       width="1000"
       height="1000"
@@ -64,6 +63,7 @@ app.controller("routeEventsMapCtrl", ['$scope', '$http', '$interval', function($
       layer-objects="blocks"
       layer-feature-name="properties.block"
       layer-feature-code="properties.block_code"
+      layer-event-data="matrixJson"
       >
     </div>
   </div>

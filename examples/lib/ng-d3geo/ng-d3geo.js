@@ -278,7 +278,6 @@
                 // .attr("dy", ".35em")
                 .attr("dy", "-1em")
                 // .attr("dy", "-0.35em")
-                .attr("pointer-events", "none")
                 .text(function(d) { 
                   return findprop(d, scope.layerFeatureName); 
                 })
@@ -394,6 +393,11 @@
                           .interpolate(d3.interpolateHcl)
                           .range(scope.layer1ColorRange.split(","));
 
+            // adding init rank
+            layer1Featues.forEach(function(d, i) {
+              d.rank = 1;
+            });
+
             // fill color gradient process
             var hgrads = g.append("defs").attr("id", scope.layer1Objects + "_hdef").selectAll("radialGradient")
               .data(layer1Featues)
@@ -409,8 +413,8 @@
                 
                 // return "hgrad" + findprop(d, scope.layer1FeatureCode);
 
-                d.rank = i + 1;
-                return "hgrad" + d.rank;
+                // d.rank = i + 1;
+                return "hgrad" + (i + 1);
               });
             
             hgrads.append("stop")
@@ -436,9 +440,9 @@
               .attr("cx", "50%")
               .attr("cy", "50%")
               .attr("r", "35%")
-              .attr("id", function(d) { 
+              .attr("id", function(d, i) { 
                 // return "grad" + findprop(d, scope.layer1FeatureCode);
-                return "grad" + d.rank;
+                return "grad" + (i + 1);
               });
 
             grads.append("stop")
@@ -562,8 +566,8 @@
               })
               .attr("layer1-feature-code", function(d) { 
                 return findprop(d, scope.layer1FeatureCode);
-              })
-              .on("click", labelClicked);
+              });
+              // .on("click", labelClicked);
 
           });
 
@@ -578,28 +582,28 @@
             }
           }
 
-          var labelClicked = function(d) {
-            var currentTagName = this.tagName;
-            var prevTagName = "";
-            var currentID = "";
-            var prevID = "";
+          // var labelClicked = function(d) {
+          //   var currentTagName = this.tagName;
+          //   var prevTagName = "";
+          //   var currentID = "";
+          //   var prevID = "";
 
-            if (active.node()) {
-              prevTagName = active.node().tagName;
-              if (this.getAttribute("layer1-feature-code") == active.node().getAttribute("layer1-feature-code")) {
-                return reset();
-              }
-            }
+          //   if (active.node()) {
+          //     prevTagName = active.node().tagName;
+          //     if (this.getAttribute("layer1-feature-code") == active.node().getAttribute("layer1-feature-code")) {
+          //       return reset();
+          //     }
+          //   }
 
-            currentID = this.getAttribute("layer1-feature-code");
+          //   currentID = this.getAttribute("layer1-feature-code");
 
-            active.classed("active", false);
-            active = g.selectAll(".layer1").filter(function(d) { 
-              return findprop(d, scope.layer1FeatureCode) == currentID;
-            }).classed("active", true);
+          //   active.classed("active", false);
+          //   active = g.selectAll(".layer1").filter(function(d) { 
+          //     return findprop(d, scope.layer1FeatureCode) == currentID;
+          //   }).classed("active", true);
 
-            zoom(d);
-          }
+          //   zoom(d);
+          // }
 
           var layer1Clicked = function(d) {
             if (active.node() === this) {
@@ -781,7 +785,7 @@
 
           // rx observeOnScope for data changes and re-render
           observeOnScope(scope, 'layer2EventData').subscribe(function(change) {
-            if (change.newValue && change.oldValue) {
+            if (change.newValue) {
               return visualizeLayer2Events(change.newValue);
             }
           }); 
@@ -794,17 +798,46 @@
             // Layer1 polygons
             gLayer1.selectAll("path")
               .filter(function(d){
-                return d.type === "Feature";
+                if (d.type === "Feature") {
+                  var rank = data[findprop(d, scope.layer1FeatureCode)];
+                  if (d.rank) {
+                    if (rank != d.rank) {
+                      d.rank = rank;
+                      return true;
+                    }
+                  } 
+                  else {
+                    d.rank = rank;
+                    return true;
+                  }
+                }
+                return false;
+                // return d.type === "Feature";
               })
+              // .transition()
               .style("fill", function(d, i) {
-                var rank = data[findprop(d, scope.layer1FeatureCode)];
-                return "url(#grad" + rank + ")";
+                return "url(#hgrad" + d.rank + ")";
+              })
+              .transition()
+              .delay(500)
+              .style("fill", function(d, i) {
+                return "url(#grad" + d.rank + ")";
               });
+
+              // .transition()
+              // .style("fill-opacity", 0)
+              // .transition()
+              // .style("fill", function(d, i) {
+              //   return "url(#grad" + d.rank + ")";
+              // })
+              // .transition()
+              // .style("fill-opacity", 1);
+
           }
 
           // rx observeOnScope for data changes and re-render
           observeOnScope(scope, 'layer1EventData').subscribe(function(change) {
-            if (change.newValue && change.oldValue) {
+            if (change.newValue) {
               return visualizeLayer1Events(change.newValue);
             }
           }); 
@@ -1224,7 +1257,6 @@
      return{
         restrict:'EA',
         scope: {
-          data: '=',
           id: '@',
           topojsonPath: '@',
           width: '@',
@@ -1236,7 +1268,8 @@
           scale: '@',
           layerObjects: '@',
           layerFeatureName: '@',
-          layerFeatureCode: '@'
+          layerFeatureCode: '@',
+          layerEventData: '='
         },
         template:"<svg></svg>",
         link: function(scope, elem, attrs){
@@ -1510,8 +1543,8 @@
               }
             }
 
-            // rx observeOnScope for data changes and re-render
-            observeOnScope(scope, 'data').subscribe(function(change) {
+            // rx observeOnScope for layerEventData changes and re-render
+            observeOnScope(scope, 'layerEventData').subscribe(function(change) {
               hideFeatureNames().then(function () {
                   if (change.newValue) {
                     showFeatureNames(change.newValue);  
