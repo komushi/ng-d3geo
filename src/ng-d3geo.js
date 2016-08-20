@@ -1403,6 +1403,7 @@
           layer2FeatureCode: '@',
           layer1EventData: '=',
           layer2EventData: '=',
+          layer1EventSortTag: '@',
           onReceiveEvents: '&',
           onStopEvents: '&'
         },
@@ -1427,10 +1428,10 @@
                         .on("click", reset);
 
           var g = svg.append('g');
-          var gLayer2 = g.append("g").attr("id", scope.layer2Objects);
-          var gLayer1 = g.append("g").attr("id", scope.layer1Objects);
-          var gLabelLayer2 = g.append("g").attr("id", scope.layer2Objects + "_label");
-          var gLabelLayer1 = g.append("g").attr("id", scope.layer1Objects + "_label");
+          var gLayer2 = g.append("g").attr("id", "layer2");
+          var gLayer1 = g.append("g").attr("id", "layer1");
+          var gLabelLayer2 = g.append("g").attr("id", "layer2_label");
+          var gLabelLayer1 = g.append("g").attr("id", "layer1_label");
 
           var projection = d3.geo.mercator()
             .center(scope.center.split(","))
@@ -1438,6 +1439,8 @@
             .translate([width / 2, height / 2]);
 
           var path = d3.geo.path().projection(projection);
+
+          var hgrads;
 
           d3.json(scope.topojsonPath, function (error, json) {
 
@@ -1455,7 +1458,7 @@
             // });
 
             // fill color gradient process
-            var hgrads = g.append("defs").attr("id", scope.layer1Objects + "_hdef").selectAll("radialGradient")
+            hgrads = g.append("defs").attr("id", "layer1_hgrads").selectAll("radialGradient")
               .data(layer1Featues)
               .enter()
               .append("radialGradient")
@@ -1467,10 +1470,8 @@
               .attr("r", "100%")
               .attr("id", function(d, i) { 
                 
-                // return "hgrad" + findprop(d, scope.layer1FeatureCode);
-
-                // d.rank = i + 1;
-                return "hgrad" + (i + 1);
+                return "hgrad" + findprop(d, scope.layer1FeatureCode);
+                // return "hgrad" + (i + 1);
               });
             
             hgrads.append("stop")
@@ -1486,7 +1487,7 @@
                 })
                 .style("stop-opacity", "1");
 
-            var grads = g.append("defs").attr("id", scope.layer1Objects + "_def").selectAll("radialGradient")
+            var grads = g.append("defs").attr("id", "layer1_grads").selectAll("radialGradient")
               .data(layer1Featues)
               .enter()
               .append("radialGradient")
@@ -1497,8 +1498,8 @@
               .attr("cy", "50%")
               .attr("r", "35%")
               .attr("id", function(d, i) { 
-                // return "grad" + findprop(d, scope.layer1FeatureCode);
-                return "grad" + (i + 1);
+                return "grad" + findprop(d, scope.layer1FeatureCode);
+                // return "grad" + (i + 1);
               });
 
             grads.append("stop")
@@ -1516,33 +1517,17 @@
                 .style("stop-opacity", "1");
 
             var mouseoverLayer1 = function(p) {
-              if (p.rank) {
-                d3.select(this)
-                  .style("fill", function(d) {
-                      return "url(#hgrad" + d.rank + ")";
-                  });
-              }
-
-
+              d3.select(this)
+                .style("fill", function(d) {
+                    return "url(#hgrad" + findprop(d, scope.layer1FeatureCode) + ")";
+                });
             }
             
             var mouseoutLayer1 = function (p) {
-              if (p.rank) {
-                d3.select(this)
-                  .style("fill", function(d) { 
-                    return "url(#grad" + d.rank + ")";
-                  });
-              }
-              // else {
-              //   d3.select(this)
-              //     .attr("style", null);
-              // }
-
-              // d3.select(this)
-              //   .style("fill", function(d) { 
-              //     return "url(#grad" + d.rank + ")";
-              //   });
-                
+              d3.select(this)
+                .style("fill", function(d) { 
+                  return "url(#grad" + findprop(d, scope.layer1FeatureCode) + ")";
+                });
             }
 
             // layer2 polygons and boundary
@@ -1791,13 +1776,6 @@
                 return "circleGrad" + d.id; 
               });
 
-            // circleGrads.append("stop")
-            //     .attr("offset", "0%")
-            //     .style("stop-color",  function(d, i) { 
-            //       return "red"; 
-            //     })
-            //     .style("stop-opacity", "0");
-
             circleGrads.append("stop")
                 .attr("offset", "0%")
                 .style("stop-color",  function(d, i) { 
@@ -1849,46 +1827,145 @@
           /***** layer2 event data *****/
 
           /***** layer1 event data *****/
-          var visualizeLayer1Events = function(data) {
-            // console.log(JSON.stringify(data));
+          var max;
 
-            // Layer1 polygons
+          var visualizeLayer1Events = function(eventList) {
+            // console.log(JSON.stringify(eventList));
+console.log(hgrads.length);
+
+
+
+            max = d3.max(d3.entries(eventList), function(d) {
+              return d.value[scope.layer1EventSortTag]; 
+            });
+
+            var colorScale = d3.scale.linear()
+              .domain([0, max/2, max])
+              .range(["#FFFFDD", "#3E9583", "#1F2D86"]);
+              // .interpolate(d3.interpolateHcl);
+
             gLayer1.selectAll("path")
               .filter(function(d){
                 if (d.type === "Feature") {
-                  var rank = data[findprop(d, scope.layer1FeatureCode)];
-                  if (d.rank) {
-                    if (rank != d.rank) {
-                      d.rank = rank;
-                      return true;
-                    }
+                  var featureCode = findprop(d, scope.layer1FeatureCode);
+                  var element = eventList[featureCode];
+                  
+                  if (!element) {
+                    d[scope.layer1EventSortTag] = 1;
+                    return true;
                   } 
                   else {
-                    d.rank = rank;
-                    return true;
+                    var sortValue = element[scope.layer1EventSortTag];
+                    if (d[scope.layer1EventSortTag]) {
+                      if (sortValue != d[scope.layer1EventSortTag]) {
+                        d[scope.layer1EventSortTag] = sortValue;
+                        return true;
+                      }
+                    } 
+                    else {
+                      d[scope.layer1EventSortTag] = sortValue;
+                      return true;
+                    }                    
                   }
                 }
                 return false;
-                // return d.type === "Feature";
-              })
-              // .transition()
-              .style("fill", function(d, i) {
-                return "url(#hgrad" + d.rank + ")";
-              })
-              .transition()
-              .delay(500)
-              .style("fill", function(d, i) {
-                return "url(#grad" + d.rank + ")";
               });
 
-              // .transition()
-              // .style("fill-opacity", 0)
-              // .transition()
+            // hgrads.selectAll("radialGradient")
+            //   .filter(function(d){
+            //     this.selectAll("stop")
+            //       .filter(function(d){
+            //           return this.getAttribute("offset") === "100%"
+            //       });
+            //   });
+
+
+            d3.select("#layer1_grads")
+              .selectAll("radialGradient")
+              .selectAll("stop")
+              .style("stop-color",  function(d, i) { 
+                // console.log("current d.id:" + d.id + " current hgrad id:" + this.parentElement.id);
+                return colorScale(d[scope.layer1EventSortTag]); 
+              });
+
+            d3.select("#layer1_hgrads")
+              .selectAll("radialGradient")
+              .selectAll("stop")
+              .filter(function(d){
+                  return this.getAttribute("offset") === "100%"
+              })
+              .style("stop-color",  function(d, i) { 
+                // console.log("current d.id:" + d.id + " current hgrad id:" + this.parentElement.id);
+                return colorScale(d[scope.layer1EventSortTag]); 
+              });
+
+            // d3.select("#layer1_hgrads").selectAll("stop")
+            //   .filter(function(d){
+            //       return this.getAttribute("offset") === "100%"
+            //   })
+            //   .style("stop-color",  function(d, i) { 
+            //     // console.log("current d.id:" + d.id + " current hgrad id:" + this.parentElement.id);
+            //     return colorScale(d[scope.layer1EventSortTag]); 
+            //   });
+
+            // d3.select("#layer1_grads").selectAll("stop")
+            //   .style("stop-color",  function(d, i) { 
+            //     return colorScale(d[scope.layer1EventSortTag]); 
+            //   });
+
+
+            gLayer1.selectAll("path")
+              .filter(function(d){
+                return d.type === "Feature"
+              })
+              .style("fill", function(d, i) {
+                // return colorScale(d[scope.layer1EventSortTag]);
+                // return "url(#grad" + (i + 1) + ")";
+                return "url(#grad" + findprop(d, scope.layer1FeatureCode) + ")";
+              })
+
+
+
+            // Layer1 polygons
+            /*
+            gLayer1.selectAll("path")
+              .filter(function(d){
+                if (d.type === "Feature") {
+                  var featureCode = findprop(d, scope.layer1FeatureCode);
+                  var element = eventList[featureCode];
+                  
+                  if (!element) {
+                    d[scope.layer1EventSortTag] = 1;
+                    return true;
+                  } 
+                  else {
+                    var sortValue = element[scope.layer1EventSortTag];
+                    if (d[scope.layer1EventSortTag]) {
+                      if (sortValue != d[scope.layer1EventSortTag]) {
+                        d[scope.layer1EventSortTag] = sortValue;
+                        return true;
+                      }
+                    } 
+                    else {
+                      d[scope.layer1EventSortTag] = sortValue;
+                      return true;
+                    }                    
+                  }
+                }
+                return false;
+              })
+              .style("fill", function(d, i) {
+                return colorScale(d[scope.layer1EventSortTag]);
+              })
+              */
               // .style("fill", function(d, i) {
-              //   return "url(#grad" + d.rank + ")";
+              //   return "url(#hgrad" + d[scope.layer1EventSortTag] + ")";
               // })
               // .transition()
-              // .style("fill-opacity", 1);
+              // .delay(500)
+              // .style("fill", function(d, i) {
+              //   return "url(#grad" + d[scope.layer1EventSortTag] + ")";
+              // });
 
           }
 
