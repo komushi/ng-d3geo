@@ -17,8 +17,8 @@ svg {
 }
 
 .layer1 {
-  /*cursor: pointer;*/
-  fill: #cedefb;
+  cursor: pointer;
+  /*fill: #cedefb;*/
 }
 
 
@@ -42,13 +42,13 @@ svg {
   /*cursor: pointer;*/
   stroke: white;
   stroke-width: 0.2;
-  fill: #cedefb;
+  /*fill: #cedefb;*/
 }
 
-.layer2:hover {
+/*.layer2:hover {
   fill: orange;
 }
-
+*/
 .label {
   fill: white;
   fill-opacity: 1;

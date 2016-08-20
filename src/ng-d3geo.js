@@ -47,8 +47,8 @@
 
           var svg = d3.select(rawSvg[0])
             .attr("width", width)
-            .attr("height", height)
-            .attr("style", "outline: thin solid gray;");
+            .attr("height", height);
+            // .attr("style", "outline: thin solid gray;");
 
           var g = svg.append('g');
           var gLayer = g.append("g").attr("id", scope.layerObjects);
@@ -359,8 +359,8 @@
 
           var svg = d3.select(rawSvg[0])
             .attr("width", width)
-            .attr("height", height)
-            .attr("style", "outline: thin solid gray;");
+            .attr("height", height);
+            // .attr("style", "outline: thin solid gray;");
 
           svg.append("rect")
                         .attr("class", "background")
@@ -693,8 +693,8 @@
 
           var svg = d3.select(rawSvg[0])
             .attr("width", width)
-            .attr("height", height)
-            .attr("style", "outline: thin solid gray;");
+            .attr("height", height);
+            // .attr("style", "outline: thin solid gray;");
 
           var g = svg.append('g');
           var gLayer = g.append("g").attr("id", scope.layerObjects);
@@ -897,8 +897,8 @@
 
           var svg = d3.select(rawSvg[0])
             .attr("width", width)
-            .attr("height", height)
-            .attr("style", "outline: thin solid gray;");
+            .attr("height", height);
+            // .attr("style", "outline: thin solid gray;");
 
           var g = svg.append('g');
 
@@ -1102,8 +1102,8 @@
 
           var svg = d3.select(rawSvg[0])
             .attr("width", width)
-            .attr("height", height)
-            .attr("style", "outline: thin solid gray;");
+            .attr("height", height);
+            // .attr("style", "outline: thin solid gray;");
 
           var g = svg.append('g');
           var gLayer = g.append("g").attr("id", scope.layerObjects);
@@ -1403,7 +1403,7 @@
           layer2FeatureCode: '@',
           layer1EventData: '=',
           layer2EventData: '=',
-          layer1EventSortTag: '@',
+          layer1EventCountTag: '@',
           onReceiveEvents: '&',
           onStopEvents: '&'
         },
@@ -1418,8 +1418,8 @@
 
           var svg = d3.select(rawSvg[0])
             .attr("width", width)
-            .attr("height", height)
-            .attr("style", "outline: thin solid gray;");
+            .attr("height", height);
+            // .attr("style", "outline: thin solid gray;");
 
           svg.append("rect")
                         .attr("class", "background")
@@ -1440,25 +1440,150 @@
 
           var path = d3.geo.path().projection(projection);
 
-          var hgrads;
+          var getCountScale = function(maxCount, width) {
+            //Calculate the variables for the sort gradient
+            return d3.scale.linear()
+              .domain([0, maxCount])
+              .range([0, width]);
+          }
 
+          var getCountPoints = function(maxCount, width, size) {
+            //Calculate the variables for the sort gradient
+            var countScale = getCountScale(maxCount, size);
+
+            //Calculate the variables for the sort gradient
+            var countRange = countScale.domain();
+            countRange[2] = countRange[1] - countRange[0];
+            var countPoints = [];
+            for(var i = 0; i < size; i++) {
+              countPoints.push(i * countRange[2]/(size-1) + countRange[0]);
+            }
+
+            return countPoints;
+          }
+
+          var getColorScale = function(maxCount, colorRange) {
+
+            return d3.scale.linear()
+              .domain([0, maxCount/2, maxCount])
+              .range(colorRange.split(","));
+          }
+
+          ///////////////////////////////////////////////////////////////////////////
+          ///////////////// adding common static gradients //////////////////////////
+          ///////////////////////////////////////////////////////////////////////////
+          var commonGrads = g.append("defs").attr("id", "common_grads_def");
+
+          var circleGrads = commonGrads
+            .append("radialGradient")
+            .attr("gradientUnits", "objectBoundingBox")
+            .attr("fx", "50%")
+            .attr("fy", "50%")
+            .attr("cx", "50%")
+            .attr("cy", "50%")
+            .attr("r", "35%")
+            .attr("id", "circleGrad1");
+            
+          circleGrads.append("stop")
+            .attr("offset", "0%")
+            .style("stop-color",  "white")
+            .style("stop-opacity", "1");
+          
+          circleGrads.append("stop")
+            .attr("offset", "100%")
+            .style("stop-color",  function(d) { 
+              return "orange";
+            })
+            .style("stop-opacity", ".6");
+
+          ///////////////////////////////////////////////////////////////////////////
+          //////////////// Adding the initial gradient for the legend ///////////////
+          ///////////////////////////////////////////////////////////////////////////
+          var countPoints = getCountPoints(1, width, 10);
+          var countScale = getCountScale(1, width);
+
+          //Create the linearGradient
+          commonGrads
+            .append("linearGradient")
+            .attr("id", "legend-traffic")
+            .attr("x1", "0%").attr("y1", "0%")
+            .attr("x2", "100%").attr("y2", "0%")
+            .selectAll("stop") 
+            .data(d3.range(10))                
+            .enter().append("stop") 
+            .attr("offset", function(d,i) { 
+              return countScale( countPoints[i] )/width;
+            })   
+            .attr("stop-color", function(d,i) { 
+              return scope.layer1ColorRange.split(",")[0]; 
+            });
+
+
+
+          ///////////////////////////////////////////////////////////////////////////
+          ////////////////////////// Draw the init legend ///////////////////////////
+          ///////////////////////////////////////////////////////////////////////////
+
+          var gBox = g.node().getBBox();
+
+          var legendWidth = Math.min(width*0.8, 600);
+          //Color Legend container
+          var legendsvg = g.append("g")
+            .attr("id", "legendWrapper")
+            .attr("transform", "translate(" + (width/2) + "," + (height * 0.95) + ")");
+
+          //Draw the Rectangle
+          legendsvg.append("rect")
+            .attr("id", "legendRect")
+            .attr("x", -legendWidth/2)
+            .attr("y", 0)
+            .attr("width", legendWidth)
+            .attr("height", 10)
+            .style("fill", "url(#legend-traffic)");
+            
+          //Append title
+          legendsvg.append("text")
+            .attr("class", "legendTitle")
+            .attr("x", 0)
+            .attr("y", -10)
+            .style("text-anchor", "middle")
+            .text("Number of Dropoff");
+
+          //Set scale for x-axis
+          var xScale = d3.scale.linear()
+             .range([-legendWidth/2, legendWidth/2])
+             .domain([ 0, 1　] );
+
+          //Define x-axis
+          var xAxis = d3.svg.axis()
+              .orient("bottom")
+              .ticks(5)
+              //.tickFormat(formatPercent)
+              .scale(xScale);
+
+          //Set up X axis
+          legendsvg.append("g")
+            .attr("id", "axis")
+            .attr("transform", "translate(0," + (10) + ")")
+            .call(xAxis);
+
+          ///////////////////////////////////////////////////////////////////////////
+          ////////////////////////// Load map topojson //////////////////////////////
+          ///////////////////////////////////////////////////////////////////////////
           d3.json(scope.topojsonPath, function (error, json) {
 
             var layer1Featues = topojson.feature(json, json.objects[scope.layer1Objects]).features;
             var layer2Featues = topojson.feature(json, json.objects[scope.layer2Objects]).features;
             var meshLayer1 = topojson.mesh(json, json.objects[scope.layer1Objects], function(a, b) { return a !== b; });
 
-            var color = d3.scale.linear().domain([1,layer1Featues.length])
-                          .interpolate(d3.interpolateHcl)
-                          .range(scope.layer1ColorRange.split(","));
+            // var colorScale = d3.scale.linear().domain([1,layer1Featues.length])
+            //               .interpolate(d3.interpolateHcl)
+            //               .range(scope.layer1ColorRange.split(","));
 
-            // adding init rank
-            // layer1Featues.forEach(function(d, i) {
-            //   d.rank = 1;
-            // });
+            var initColor = scope.layer1ColorRange.split(",")[0];
 
             // fill color gradient process
-            hgrads = g.append("defs").attr("id", "layer1_hgrads").selectAll("radialGradient")
+            var hgrads = g.append("defs").attr("id", "layer1_hgrads").selectAll("radialGradient")
               .data(layer1Featues)
               .enter()
               .append("radialGradient")
@@ -1483,7 +1608,7 @@
             hgrads.append("stop")
                 .attr("offset", "100%")
                 .style("stop-color",  function(d, i) { 
-                  return color(i + 1); 
+                  return initColor; 
                 })
                 .style("stop-opacity", "1");
 
@@ -1505,14 +1630,14 @@
             grads.append("stop")
                 .attr("offset", "0%")
                 .style("stop-color",  function(d, i) { 
-                  return color(i + 1); 
+                  return initColor; 
                 })
                 .style("stop-opacity", ".7");
 
             grads.append("stop")
                 .attr("offset", "100%")
                 .style("stop-color",  function(d, i) { 
-                  return color(i + 1); 
+                  return initColor; 
                 })
                 .style("stop-opacity", "1");
 
@@ -1536,8 +1661,8 @@
               .enter().append("path")
               .attr("d", path)
               .attr("fill", function(d, i) {
-                  // return "url(#grad" + findprop(d, scope.layer1FeatureCode) + ")";
-                  return "#bbdefb";
+                  return "url(#grad" + findprop(d, scope.layer1FeatureCode) + ")";
+                  // return "#bbdefb";
               })
               .style("fill-opacity", 0)
               .style("display", "none")
@@ -1583,12 +1708,9 @@
               .enter().append("path")
               .attr("class", "layer1")
               .attr("d", path)
-              // .attr("fill", function(d,i) { 
-              //   return color(i + 1);
-              // })
-              // .style("fill", function(d, i) {
-              //   return "url(#grad" + d.rank + ")";
-              // })
+              .style("fill", function(d, i) {
+                return "url(#grad" + findprop(d, scope.layer1FeatureCode) + ")";
+              })
               .attr("layer1-feature-code", function(d) {
                 return findprop(d, scope.layer1FeatureCode);
               })
@@ -1621,7 +1743,6 @@
               .attr("layer1-feature-code", function(d) { 
                 return findprop(d, scope.layer1FeatureCode);
               });
-              // .on("click", labelClicked);
 
           });
 
@@ -1635,29 +1756,6 @@
               }
             }
           }
-
-          // var labelClicked = function(d) {
-          //   var currentTagName = this.tagName;
-          //   var prevTagName = "";
-          //   var currentID = "";
-          //   var prevID = "";
-
-          //   if (active.node()) {
-          //     prevTagName = active.node().tagName;
-          //     if (this.getAttribute("layer1-feature-code") == active.node().getAttribute("layer1-feature-code")) {
-          //       return reset();
-          //     }
-          //   }
-
-          //   currentID = this.getAttribute("layer1-feature-code");
-
-          //   active.classed("active", false);
-          //   active = g.selectAll(".layer1").filter(function(d) { 
-          //     return findprop(d, scope.layer1FeatureCode) == currentID;
-          //   }).classed("active", true);
-
-          //   zoom(d);
-          // }
 
           var layer1Clicked = function(d) {
             if (active.node() === this) {
@@ -1741,6 +1839,10 @@
               .style("fill-opacity", 1)
               .style("display", "block");
 
+            d3.select(this)
+              .style("fill", function(d) {
+                  return "url(#hgrad" + findprop(d, scope.layer1FeatureCode) + ")";
+              });
           }
           
           var mouseoutLayer2 = function (p) {
@@ -1753,45 +1855,16 @@
               .transition()
               .style("display", "none");
 
+            d3.select(this)
+              .style("fill", function(d) {
+                  return "url(#grad" + findprop(d, scope.layer1FeatureCode) + ")";
+              });
           }
           /***** hover *****/
 
           /***** layer2 event data *****/
-          // var duration = 1500;
-
-          var styleCircle = g.selectAll('circle');
-
-            var circleGrads = g.append("defs").attr("id", "circle_def")
-              .selectAll("radialGradient")
-              .data([{id: 1}])
-              .enter()
-              .append("radialGradient")
-              .attr("gradientUnits", "objectBoundingBox")
-              .attr("fx", "50%")
-              .attr("fy", "50%")
-              .attr("cx", "50%")
-              .attr("cy", "50%")
-              .attr("r", "35%")
-              .attr("id", function(d) { 
-                return "circleGrad" + d.id; 
-              });
-
-            circleGrads.append("stop")
-                .attr("offset", "0%")
-                .style("stop-color",  function(d, i) { 
-                  return "white"; 
-                })
-                .style("stop-opacity", "1");
-
-            circleGrads.append("stop")
-                .attr("offset", "100%")
-                .style("stop-color",  function(d, i) { 
-                  return "blue";
-                })
-                .style("stop-opacity", ".6");
-
           var visualizeLayer2Events = function(data) {
-            styleCircle
+            g.selectAll('circle')
                 .data(data)
                 .enter().append('circle')
                 .style('opacity', 0)
@@ -1827,23 +1900,56 @@
           /***** layer2 event data *****/
 
           /***** layer1 event data *****/
-          var max;
-
           var visualizeLayer1Events = function(eventList) {
-            // console.log(JSON.stringify(eventList));
-console.log(hgrads.length);
+            
+            var events = d3.entries(eventList);
 
-
-
-            max = d3.max(d3.entries(eventList), function(d) {
-              return d.value[scope.layer1EventSortTag]; 
+            var maxCount = d3.max(events, function(d) {
+              return d.value[scope.layer1EventCountTag]; 
             });
 
-            var colorScale = d3.scale.linear()
-              .domain([0, max/2, max])
-              .range(["#FFFFDD", "#3E9583", "#1F2D86"]);
-              // .interpolate(d3.interpolateHcl);
+            ///////////////////////////////////////////////////////////////////////////
+            //////////////// Update the gradient for the legend ///////////////////////
+            ///////////////////////////////////////////////////////////////////////////
+            var colorScale = getColorScale(maxCount, scope.layer1ColorRange);
 
+            var countPoints = getCountPoints(maxCount, width, 10);
+
+
+            //Update the linearGradient
+            d3.select("#common_grads_def")
+              .selectAll("linearGradient")
+              .selectAll("stop")
+              .attr("stop-color",  function(d, i) { 
+                return colorScale(countPoints[i]); 
+              });
+
+            ///////////////////////////////////////////////////////////////////////////
+            ////////////////////////// Update the legend //////////////////////////////
+            ///////////////////////////////////////////////////////////////////////////
+            var xScale = d3.scale.linear()
+               .range([-legendWidth/2, legendWidth/2])
+               .domain([ 0, maxCount　] );
+
+            var xAxis = d3.svg.axis()
+                .orient("bottom")
+                .ticks(5)
+                //.tickFormat(formatPercent)
+                .scale(xScale);
+
+
+            d3.select("#axis")
+              .selectAll(".tick")
+              .remove();
+
+            d3.select("#axis")
+              .call(xAxis);
+
+
+            ///////////////////////////////////////////////////////////////////////////
+            //////////////// Set the dynamic gradient for layer1 //////////////////////
+            ///////////////////////////////////////////////////////////////////////////
+            // edit event count  
             gLayer1.selectAll("path")
               .filter(function(d){
                 if (d.type === "Feature") {
@@ -1851,19 +1957,19 @@ console.log(hgrads.length);
                   var element = eventList[featureCode];
                   
                   if (!element) {
-                    d[scope.layer1EventSortTag] = 1;
+                    d[scope.layer1EventCountTag] = 1;
                     return true;
                   } 
                   else {
-                    var sortValue = element[scope.layer1EventSortTag];
-                    if (d[scope.layer1EventSortTag]) {
-                      if (sortValue != d[scope.layer1EventSortTag]) {
-                        d[scope.layer1EventSortTag] = sortValue;
+                    var sortValue = element[scope.layer1EventCountTag];
+                    if (d[scope.layer1EventCountTag]) {
+                      if (sortValue != d[scope.layer1EventCountTag]) {
+                        d[scope.layer1EventCountTag] = sortValue;
                         return true;
                       }
                     } 
                     else {
-                      d[scope.layer1EventSortTag] = sortValue;
+                      d[scope.layer1EventCountTag] = sortValue;
                       return true;
                     }                    
                   }
@@ -1871,21 +1977,13 @@ console.log(hgrads.length);
                 return false;
               });
 
-            // hgrads.selectAll("radialGradient")
-            //   .filter(function(d){
-            //     this.selectAll("stop")
-            //       .filter(function(d){
-            //           return this.getAttribute("offset") === "100%"
-            //       });
-            //   });
-
-
+            // edit event count
             d3.select("#layer1_grads")
               .selectAll("radialGradient")
               .selectAll("stop")
               .style("stop-color",  function(d, i) { 
                 // console.log("current d.id:" + d.id + " current hgrad id:" + this.parentElement.id);
-                return colorScale(d[scope.layer1EventSortTag]); 
+                return colorScale(d[scope.layer1EventCountTag]); 
               });
 
             d3.select("#layer1_hgrads")
@@ -1896,77 +1994,27 @@ console.log(hgrads.length);
               })
               .style("stop-color",  function(d, i) { 
                 // console.log("current d.id:" + d.id + " current hgrad id:" + this.parentElement.id);
-                return colorScale(d[scope.layer1EventSortTag]); 
+                return colorScale(d[scope.layer1EventCountTag]); 
               });
-
-            // d3.select("#layer1_hgrads").selectAll("stop")
-            //   .filter(function(d){
-            //       return this.getAttribute("offset") === "100%"
-            //   })
-            //   .style("stop-color",  function(d, i) { 
-            //     // console.log("current d.id:" + d.id + " current hgrad id:" + this.parentElement.id);
-            //     return colorScale(d[scope.layer1EventSortTag]); 
-            //   });
-
-            // d3.select("#layer1_grads").selectAll("stop")
-            //   .style("stop-color",  function(d, i) { 
-            //     return colorScale(d[scope.layer1EventSortTag]); 
-            //   });
-
 
             gLayer1.selectAll("path")
               .filter(function(d){
                 return d.type === "Feature"
               })
               .style("fill", function(d, i) {
-                // return colorScale(d[scope.layer1EventSortTag]);
+                // return colorScale(d[scope.layer1EventCountTag]);
                 // return "url(#grad" + (i + 1) + ")";
                 return "url(#grad" + findprop(d, scope.layer1FeatureCode) + ")";
-              })
+              });
 
-
-
-            // Layer1 polygons
-            /*
-            gLayer1.selectAll("path")
-              .filter(function(d){
-                if (d.type === "Feature") {
-                  var featureCode = findprop(d, scope.layer1FeatureCode);
-                  var element = eventList[featureCode];
-                  
-                  if (!element) {
-                    d[scope.layer1EventSortTag] = 1;
-                    return true;
-                  } 
-                  else {
-                    var sortValue = element[scope.layer1EventSortTag];
-                    if (d[scope.layer1EventSortTag]) {
-                      if (sortValue != d[scope.layer1EventSortTag]) {
-                        d[scope.layer1EventSortTag] = sortValue;
-                        return true;
-                      }
-                    } 
-                    else {
-                      d[scope.layer1EventSortTag] = sortValue;
-                      return true;
-                    }                    
-                  }
-                }
-                return false;
-              })
-              .style("fill", function(d, i) {
-                return colorScale(d[scope.layer1EventSortTag]);
-              })
-              */
               // .style("fill", function(d, i) {
-              //   return "url(#hgrad" + d[scope.layer1EventSortTag] + ")";
+              //   return "url(#hgrad" + d[scope.layer1EventCountTag] + ")";
               // })
               // .transition()
               // .delay(500)
               // .style("fill", function(d, i) {
-              //   return "url(#grad" + d[scope.layer1EventSortTag] + ")";
+              //   return "url(#grad" + d[scope.layer1EventCountTag] + ")";
               // });
-
           }
 
           // rx observeOnScope for data changes and re-render
