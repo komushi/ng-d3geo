@@ -4,6 +4,8 @@ svg {
   font-size: 11px;
   font-family: 'Noto Sans Japanese', 'Klee', 'Meiryo';
   font-weight: 300;
+  margin: auto;
+  display: block;
 }
 
 .background {
@@ -36,6 +38,15 @@ svg {
   stroke-dasharray: 2,2;
   stroke-linejoin: round;
   stroke-width: 1;
+}
+
+.layer1LegendTitle {
+  fill: black;
+  fill-opacity: 1;
+  font-size: 18px;
+  font-family: 'Noto Sans Japanese', 'Klee', 'Meiryo';
+  font-weight: 700;
+  text-anchor: middle;
 }
 
 .layer2 {

@@ -1404,6 +1404,7 @@
           layer1EventData: '=',
           layer2EventData: '=',
           layer1EventCountTag: '@',
+          layer1LegendTitle: '@',
           onReceiveEvents: '&',
           onStopEvents: '&'
         },
@@ -1440,6 +1441,9 @@
 
           var path = d3.geo.path().projection(projection);
 
+          ///////////////////////////////////////////////////////////////////////////
+          /////////////////////// legend common functions ///////////////////////////
+          ///////////////////////////////////////////////////////////////////////////
           var getCountScale = function(maxCount, width) {
             //Calculate the variables for the sort gradient
             return d3.scale.linear()
@@ -1469,6 +1473,16 @@
               .range(colorRange.split(","));
           }
 
+          var getXAxis = function(legendWidth, maxCount) {
+            var xScale = d3.scale.linear()
+             .range([-legendWidth/2, legendWidth/2])
+             .domain([ 0, maxCount　] );
+
+            return d3.svg.axis().orient("bottom")
+                    .ticks(5)
+                    //.tickFormat(formatPercent)
+                    .scale(xScale);
+          }
           ///////////////////////////////////////////////////////////////////////////
           ///////////////// adding common static gradients //////////////////////////
           ///////////////////////////////////////////////////////////////////////////
@@ -1543,23 +1557,14 @@
             
           //Append title
           legendsvg.append("text")
-            .attr("class", "legendTitle")
+            .attr("class", "layer1LegendTitle")
             .attr("x", 0)
             .attr("y", -10)
             .style("text-anchor", "middle")
-            .text("Number of Dropoff");
-
-          //Set scale for x-axis
-          var xScale = d3.scale.linear()
-             .range([-legendWidth/2, legendWidth/2])
-             .domain([ 0, 1　] );
+            .text(scope.layer1LegendTitle);
 
           //Define x-axis
-          var xAxis = d3.svg.axis()
-              .orient("bottom")
-              .ticks(5)
-              //.tickFormat(formatPercent)
-              .scale(xScale);
+          var xAxis = getXAxis(legendWidth, 0);
 
           //Set up X axis
           legendsvg.append("g")
@@ -1927,16 +1932,7 @@
             ///////////////////////////////////////////////////////////////////////////
             ////////////////////////// Update the legend //////////////////////////////
             ///////////////////////////////////////////////////////////////////////////
-            var xScale = d3.scale.linear()
-               .range([-legendWidth/2, legendWidth/2])
-               .domain([ 0, maxCount　] );
-
-            var xAxis = d3.svg.axis()
-                .orient("bottom")
-                .ticks(5)
-                //.tickFormat(formatPercent)
-                .scale(xScale);
-
+            var xAxis = getXAxis(legendWidth, maxCount);
 
             d3.select("#axis")
               .selectAll(".tick")
