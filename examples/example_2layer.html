@@ -126,6 +126,7 @@ var coordinates =
 
   var timer;
 
+  // layer2 events
   $scope.subEventsFrom = function (feature) {
     console.log("subEventsFrom" + feature);
 
@@ -154,34 +155,28 @@ var coordinates =
     timer = null;
   };
 
-  var districtRank1 = [];
-  var rank = 1;
-  for (i = 101; i <= 123; i++){
-    // districtRank1.push({district_code:i});
-    districtRank1[i.toString()] = rank;
-    rank++;
-  }
-  
-  var districtRank2 = [];
-  rank = 1;
-  for (i = 123; i >= 101; i--){
-    // districtRank2.push({district_code:i});
-    districtRank2[i.toString()] = rank;
-    rank++;
-  }
-
-  var districtRanks = [];
-  districtRanks.push(districtRank1);
-  districtRanks.push(districtRank2);
-
+  // layer1 events
   $interval(function(){
-    var min = 0;
-    var max = 1;
-    
-    var index = Math.floor(Math.random() * (max - min + 1)) + min;
-    $scope.districtRank = districtRanks[index];
+
+    var districtRank = {};
+    var rank = 1;
+    for (i = 101; i <= 123; i++){
+
+      var min = 0;
+      var max = 10;
+      
+      var count = Math.floor(Math.random() * (max - min + 1)) + min;
+
+
+      districtRank[i.toString()] = {district:i, dropoffCount:count, rank: rank};
+      rank++;
+    }
+
+    $scope.districtRank = districtRank;
+
+    console.log("$scope.districtRank", $scope.districtRank)
   
-  }, 1500);  
+  }, 1500);
 
 }]);
 </script>
@@ -206,6 +201,8 @@ var coordinates =
       layer2-feature-code="properties.block_code"
       layer1-event-data="districtRank"
       layer2-event-data="circleData"
+      layer1-event-count-tag="dropoffCount"
+      layer1-legend-title="３０分以内の降車イベント"
       on-receive-events="subEventsFrom(feature)"
       on-stop-events="unsubEvents()"
       >
